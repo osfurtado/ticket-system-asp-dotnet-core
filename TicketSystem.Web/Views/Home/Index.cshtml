@@ -3,6 +3,9 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4 mb-5">Ticket System</h1>
+    <div class="d-flex justify-content-center gap-5">
+        <a asp-action="LoginOnly" class="btn btn-primary">User Panel</a>
+        <a asp-action="AdminOnly" class="btn btn-primary">Admin Panel</a>
+    </div>
 </div>
