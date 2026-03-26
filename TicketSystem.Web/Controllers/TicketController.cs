@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using TicketSystem.Web.Models;
@@ -15,10 +16,12 @@ namespace TicketSystem.Web.Controllers
     public class TicketController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public TicketController(AppDbContext context)
+        public TicketController(AppDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         // GET: Ticket
@@ -61,13 +64,153 @@ namespace TicketSystem.Web.Controllers
                 .Include(t => t.ClosedBy)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.Project)
+                .Include(t => t.Comments)
+                    .ThenInclude(c => c.Creator)
+                .Include(t => t.Attachments)
+                .ThenInclude(a => a.UploadedBy)
                 .FirstOrDefaultAsync(m => m.Id == id);
+            
             if (ticketModel == null)
             {
                 return NotFound();
             }
 
-            return View(ticketModel);
+            var viewModel = new TicketDetailsViewModel
+            {
+                Id = ticketModel.Id,
+                Title = ticketModel.Title,
+                Description = ticketModel.Description,
+                CurrentStatus = ticketModel.CurrentStatus,
+                ProjectName = ticketModel.Project != null ? ticketModel.Project.Title : "No Project",
+                CreatorName = ticketModel.CreatedBy != null ? ticketModel.CreatedBy.UserName! : "Unknown",
+                AssigneeName = ticketModel.Assignee?.UserName,
+                CreatedAt = ticketModel.CreatedAt,
+
+                Comments = ticketModel.Comments
+                            .OrderByDescending(c => c.CreatedAt)
+                            .Select(c => new CommentViewModel
+                            {
+                                CreatorName = c.Creator?.UserName ?? "Unknown",
+                                Content = c.Content,
+                                CreatedAt = c.CreatedAt
+                            }).ToList(),
+
+                Attachments = ticketModel.Attachments
+                    .OrderByDescending(a => a.UploadedAt)
+                    .Select(a => new AttachmentViewModel
+                    {
+                        Id = a.Id,
+                        Filename = a.Filename,
+                        UploadedByName = a.UploadedBy?.UserName ?? "Unknown",
+                        UploadedAt = a.UploadedAt
+                    }).ToList(),
+
+
+                NewComment = new AddCommentViewModel { TicketId = ticketModel.Id},
+                NewAttachment = new UploadAttachmentViewModel { TicketId = ticketModel.Id }
+            };
+            
+
+            return View(viewModel);
+        }
+
+        // POST: /Tickets/AddComment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddComment(AddCommentViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return RedirectToAction(nameof(Details), new { id = model.TicketId });
+            }
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return Unauthorized(); 
+            }
+
+            var comment = new TicketComment
+            {
+                TicketId = model.TicketId,
+                Content = model.Content,
+                CreatedAt = DateTime.UtcNow, 
+                CreatorId = currentUserId
+            };
+
+            _context.TicketComments.Add(comment);
+            await _context.SaveChangesAsync();
+            return Redirect($"{Url.Action("Details", new { id = model.TicketId })}#comments");
+        }
+
+        // POST: /Tickets/UploadAttachment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAttachment(UploadAttachmentViewModel model)
+        {
+            if (!ModelState.IsValid || model.File == null || model.File.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Select please a valid file";
+                return RedirectToAction(nameof(Details), new { id = model.TicketId });
+            }
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "tickets", model.TicketId.ToString());
+
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(model.File.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await model.File.CopyToAsync(fileStream);
+            }
+
+            var attachment = new TicketAttachment
+            {
+                TicketId = model.TicketId,
+                Filename = uniqueFileName, 
+                UploadedById = currentUserId,
+                UploadedAt = DateTime.UtcNow
+            };
+
+            _context.TicketAttachments.Add(attachment);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "File added successfully!";
+            return RedirectToAction(nameof(Details), new { id = model.TicketId });
+
+        }
+
+
+        // GET: /Tickets/DownloadAttachment/5
+        public async Task<IActionResult> DownloadAttachment(int id)
+        {
+            var attachment = await _context.TicketAttachments.FindAsync(id);
+            if (attachment == null)
+            {
+                return NotFound();
+            }
+
+            var filePath = Path.Combine(_environment.WebRootPath, "uploads", "tickets", attachment.TicketId.ToString(), attachment.Filename);
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                return NotFound("Arquivo físico não encontrado no servidor.");
+            }
+
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+
+            var originalFileName = attachment.Filename.Substring(attachment.Filename.IndexOf('_') + 1);
+
+            return File(fileBytes, "application/octet-stream", originalFileName);
         }
 
         // GET: Ticket/Create

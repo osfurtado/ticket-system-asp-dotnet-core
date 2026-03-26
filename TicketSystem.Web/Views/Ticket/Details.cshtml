@@ -1,78 +1,166 @@
-﻿@model TicketSystem.Web.Models.Ticket.TicketModel
+﻿@using TicketSystem.Web.Models.Ticket
+@model TicketDetailsViewModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Ticket - " + Model.Title;
 }
 
-<h1>Details</h1>
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-<div>
-    <h4>TicketModel</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AssignedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.AssignedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ClosedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ClosedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CurrentStatus)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CurrentStatus)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedBy)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedBy.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Project)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Project.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Assignee)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Assignee.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ClosedBy)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ClosedBy.Id)
-        </dd>
-    </dl>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="mb-0">@Model.Title</h2>
+                <span class="badge bg-primary fs-6">@Model.CurrentStatus</span>
+            </div>
+
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-muted border-bottom pb-2">Descrição</h5>
+                    <p class="card-text mt-3" style="white-space: pre-wrap;">@Model.Description</p>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <h4 id="comments" class="mb-3">Comentários (@Model.Comments.Count)</h4>
+
+            <div class="comments-list mb-4">
+                @if (Model.Comments.Any())
+                {
+                    foreach (var comment in Model.Comments)
+                    {
+                        <div class="card mb-3 shadow-sm border-0 bg-light">
+                            <div class="card-body py-2 px-3">
+                                <div class="d-flex justify-content-between text-muted small mb-2 border-bottom pb-1">
+                                    <strong>@comment.CreatorName</strong>
+                                    <span>@comment.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                                <p class="mb-1" style="white-space: pre-wrap;">@comment.Content</p>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted fst-italic">Nenhum comentário adicionado ainda.</p>
+                }
+            </div>
+
+            <div class="card shadow-sm border-primary border-opacity-25">
+                <div class="card-body">
+                    <h5 class="card-title">Adicionar Comentário</h5>
+                    <form asp-action="AddComment" method="post">
+                        <input type="hidden" name="TicketId" value="@Model.Id" />
+    
+                        <div class="form-group mb-3">
+                            <textarea name="Content" class="form-control" rows="3" placeholder="Escreva seu comentário aqui..." required></textarea>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-chat-text"></i> Comentar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Detalhes</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <span class="text-muted d-block small">Projeto</span>
+                            <strong>@Model.ProjectName</strong>
+                        </li>
+                        <li class="mb-2">
+                            <span class="text-muted d-block small">Criado por</span>
+                            <span>@Model.CreatorName</span>
+                        </li>
+                        <li class="mb-2">
+                            <span class="text-muted d-block small">Responsável</span>
+                            <span>@(Model.AssigneeName ?? "Não atribuído")</span>
+                        </li>
+                        <li>
+                            <span class="text-muted d-block small">Data de Criação</span>
+                            <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Anexos</h5>
+                    <span class="badge bg-secondary">@Model.Attachments.Count</span>
+                </div>
+                <div class="card-body">
+                    
+                    @if (Model.Attachments.Any())
+                    {
+                        <ul class="list-group list-group-flush mb-3">
+                            @foreach (var attachment in Model.Attachments)
+                            {
+                                var displayName = attachment.Filename.Contains('_')
+                                    ? attachment.Filename.Substring(attachment.Filename.IndexOf('_') + 1)
+                                    : attachment.Filename;
+
+                                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                    <div class="text-truncate me-2" title="@displayName">
+                                        <i class="bi bi-paperclip text-muted"></i>
+                                        <small>@displayName</small>
+                                    </div>
+                                    <a asp-action="DownloadAttachment" asp-route-id="@attachment.Id" class="btn btn-sm btn-outline-secondary" title="Baixar">
+                                        ⬇️
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted small fst-italic">Nenhum arquivo anexado.</p>
+                    }
+
+                    <hr />
+
+                    <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="TicketId" value="@Model.Id" />
+                        
+                        <div class="mb-2">
+                            <label class="form-label small text-muted">Anexar novo arquivo</label>
+                            <input class="form-control form-control-sm" type="file" name="File" required />
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-success w-100">
+                            Fazer Upload
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
