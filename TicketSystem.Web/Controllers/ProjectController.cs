@@ -24,8 +24,10 @@ namespace TicketSystem.Web.Controllers
         // GET: Project
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.Projects.Include(p => p.Workflow);
-            return View(await appDbContext.ToListAsync());
+            var projects = _context.Projects.Include(p => p.Workflow);
+
+
+            return View(await projects.ToListAsync());
         }
 
         // GET: Project/Details/5
@@ -80,8 +82,7 @@ namespace TicketSystem.Web.Controllers
                     StartDate = viewModel.StartDate,
                     EndDate = viewModel.EndDate,
                     WorkflowId = viewModel.WorkflowId!.Value,
-                    IsDeleted = false,
-                    IsFinished = false
+                    IsDeleted = false
                 };
                 _context.Add(project);
                 await _context.SaveChangesAsync();
@@ -105,7 +106,7 @@ namespace TicketSystem.Web.Controllers
             {
                 return NotFound();
             }
-            ViewData["WorkflowId"] = new SelectList(_context.Workflows, "Id", "Id", projectModel.WorkflowId);
+            ViewData["WorkflowId"] = new SelectList(_context.Workflows, "Id", "Name", projectModel.WorkflowId);
             return View(projectModel);
         }
 
@@ -114,7 +115,7 @@ namespace TicketSystem.Web.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,StartDate,EndDate,WorkflowId,IsFinished,IsDeleted")] ProjectModel projectModel)
+        public async Task<IActionResult> Edit(int id, ProjectModel projectModel)
         {
             if (id != projectModel.Id)
             {
@@ -141,7 +142,7 @@ namespace TicketSystem.Web.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["WorkflowId"] = new SelectList(_context.Workflows, "Id", "Id", projectModel.WorkflowId);
+            ViewData["WorkflowId"] = new SelectList(_context.Workflows, "Id", "Name", projectModel.WorkflowId);
             return View(projectModel);
         }
 
@@ -170,9 +171,10 @@ namespace TicketSystem.Web.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var projectModel = await _context.Projects.FindAsync(id);
+            
             if (projectModel != null)
             {
-                _context.Projects.Remove(projectModel);
+                projectModel.IsDeleted = true;
             }
 
             await _context.SaveChangesAsync();

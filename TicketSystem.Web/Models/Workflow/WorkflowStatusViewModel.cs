@@ -6,7 +6,7 @@ namespace TicketSystem.Web.Models.Workflow
     public class WorkflowCreateViewModel
     {
         [Required(ErrorMessage = "Workflow name is Required")]
-        [Display(Name = "Workflow name")]
+        [Display(Name = "Name")]
         public string Name { get; set; } = string.Empty;
 
         public List<WorkflowStatusViewModel> Statuses { get; set; } = new List<WorkflowStatusViewModel>();

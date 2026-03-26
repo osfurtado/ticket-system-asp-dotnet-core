@@ -28,9 +28,6 @@
                 @Html.DisplayNameFor(model => model.Workflow)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.IsFinished)
-            </th>
-            <th>
                 @Html.DisplayNameFor(model => model.IsDeleted)
             </th>
             <th></th>
@@ -52,10 +49,7 @@
                 @Html.DisplayFor(modelItem => item.EndDate)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Workflow.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsFinished)
+                @Html.DisplayFor(modelItem => item.Workflow!.Name)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.IsDeleted)

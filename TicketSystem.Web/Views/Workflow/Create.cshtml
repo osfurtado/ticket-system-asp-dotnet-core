@@ -4,23 +4,60 @@
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
+<h1>Create Workflow</h1>
 
-<h4>WorkflowModel</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" method="post" id="workflowForm">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="control-label mb-3"></label>
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
+            <hr />
+            <div class="d-flex justify-content-between">
+                <h4>Create Status</h4>
+                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#statusModal">
+                    Add Status
+                </button>
+            </div>
+            <table class="table table-bordered" id="statusTable">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th style="width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="submit" value="Create" class="btn btn-primary mt-4" />
             </div>
         </form>
+    </div>
+</div>
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusModalLabel">New Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newStatusName" class="form-label">Status</label>
+                    <input type="text" class="form-control" id="newStatusName" placeholder="Ex: Testing">
+                    <span id="modalError" class="text-danger" style="display:none;">Name is required.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addStatus()">Add</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -30,4 +67,76 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function addStatus() {
+            const nameInput = document.getElementById('newStatusName');
+            const nameValue = nameInput.value.trim();
+            const errorSpan = document.getElementById('modalError');
+
+            // Validação simples no client-side
+            if (!nameValue) {
+                errorSpan.style.display = 'block';
+                return;
+            }
+            errorSpan.style.display = 'none';
+
+            // Seleciona o corpo da tabela
+            const tbody = document.querySelector('#statusTable tbody');
+            
+            // Cria uma nova linha (tr)
+            const tr = document.createElement('tr');
+            
+            // Monta o HTML da linha. O input hidden é essencial para o Model Binding!
+            // Usamos uma classe 'status-row' para facilitar a reindexação depois.
+            tr.innerHTML = `
+                <td class="status-name-cell">
+                    ${nameValue}
+                    <input type="hidden" class="status-hidden-name" value="${nameValue}" />
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeStatus(this)">Remover</button>
+                </td>
+            `;
+            
+            tbody.appendChild(tr);
+
+            // Limpa o input do modal
+            nameInput.value = '';
+
+            // Fecha o modal usando a API do Bootstrap 5
+            const modalElement = document.getElementById('statusModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            modalInstance.hide();
+
+            // Atualiza os índices para o ASP.NET Core
+            reindexStatuses();
+        }
+
+        function removeStatus(button) {
+            // Remove a linha (tr) que contém o botão clicado
+            const row = button.closest('tr');
+            row.remove();
+            
+            // Reindexa a lista para não pular números (0, 1, 2...)
+            reindexStatuses();
+        }
+
+        function reindexStatuses() {
+            // Pega todas as linhas adicionadas
+            const rows = document.querySelectorAll('#statusTable tbody tr');
+            
+            rows.forEach((row, index) => {
+                // Atualiza o atributo 'name' do input oculto para seguir o padrão do MVC
+                const hiddenInput = row.querySelector('.status-hidden-name');
+                if (hiddenInput) {
+                    hiddenInput.setAttribute('name', `Statuses[${index}].Name`);
+                }
+            });
+        }
+        
+        // Foca automaticamente no input quando o modal abre (Melhor UX)
+        document.getElementById('statusModal').addEventListener('shown.bs.modal', function () {
+            document.getElementById('newStatusName').focus();
+        });
+    </script>
 }

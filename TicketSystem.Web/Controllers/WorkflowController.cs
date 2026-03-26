@@ -58,26 +58,53 @@ namespace TicketSystem.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create( WorkflowCreateViewModel viewModel)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return View(viewModel);
             }
 
-            var workflow = new WorkflowModel
+            if (viewModel.Statuses != null && viewModel.Statuses.Any())
+            {
+                foreach (var status in viewModel.Statuses)
+                {
+                    status.IsInicial = false;
+                    status.IsFinal = false;
+                }
+
+                viewModel.Statuses.First().IsInicial = true;
+                viewModel.Statuses.Last().IsFinal = true;
+            }
+
+            var novoWorkflow = new WorkflowModel
             {
                 Name = viewModel.Name,
-                Statuses = viewModel.Statuses.Select(s => new WorkflowStatus
+                // Converte a lista de StatusViewModel para a entidade WorkflowStatus
+                Statuses = viewModel.Statuses?.Select(s => new WorkflowStatus
                 {
                     Name = s.Name,
                     IsInicial = s.IsInicial,
                     IsFinal = s.IsFinal
-                }).ToList()
+                    // O EF Core vai preencher o Id e o WorkflowId automaticamente!
+                }).ToList() ?? new List<WorkflowStatus>()
             };
 
-            _context.Workflows.Add(workflow);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Workflows.Add(novoWorkflow);
+                await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Index));
+                // Mensagem de sucesso opcional para mostrar na próxima tela
+                TempData["SuccessMessage"] = "Workflow criado com sucesso!";
+
+                return RedirectToAction(nameof(Index)); // Redireciona para a listagem
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Fail to save Workflow on the database", ex.Message);
+                // Em caso de erro no banco, logar o erro e devolver a view
+                ModelState.AddModelError("", "Failed to save the Workflow in the Database");
+                return View(viewModel);
+            }
         }
 
         // GET: Workflow/Edit/5

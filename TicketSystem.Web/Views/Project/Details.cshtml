@@ -38,13 +38,7 @@
             @Html.DisplayNameFor(model => model.Workflow)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Workflow.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsFinished)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsFinished)
+            @Html.DisplayFor(model => model.Workflow!.Name)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.IsDeleted)

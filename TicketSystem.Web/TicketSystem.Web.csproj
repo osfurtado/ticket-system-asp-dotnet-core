@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <Folder Include="Views\Communication\" />
-    <Folder Include="Views\Ticket\" />
   </ItemGroup>
 
   <ItemGroup>

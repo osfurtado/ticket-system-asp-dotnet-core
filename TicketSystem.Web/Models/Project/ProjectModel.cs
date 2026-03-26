@@ -13,14 +13,12 @@ namespace TicketSystem.Web.Models.Project
 
         public DateOnly StartDate { get; set; }
 
-        public DateOnly EndDate { get; set; }
+        public DateOnly? EndDate { get; set; }
 
         [ForeignKey("WorkflowModel")]
         public int WorkflowId { get; set; }
 
         public WorkflowModel? Workflow { get; set; }
-
-        public bool IsFinished { get; set; }
 
         public bool IsDeleted { get; set; }
 
