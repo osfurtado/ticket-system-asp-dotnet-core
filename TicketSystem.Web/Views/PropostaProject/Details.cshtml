@@ -1,0 +1,260 @@
+﻿@using TicketSystem.Web.Models.Project.Proposta
+@model ProjectBoardViewModel
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                @Model.ProjectTitle
+            </h2>
+            <span class="text-muted">Workflow: @Model.WorkflowName</span>
+            @* Nota: Para usar o EndDate aqui, precisaria de o adicionar ao ProjectBoardViewModel *@
+            @if (Model.EndDate.HasValue)
+            {
+               <span class="text-muted">Ended at: @Model.EndDate</span>    
+            }
+        </div>
+        @if (!Model.EndDate.HasValue)
+        {
+            <div class="d-flex gap-2">
+                <form asp-controller="PropostaProject" asp-action="Close" asp-route-id="@Model.ProjectId" method="post"
+                      onsubmit="return confirm('Tem a certeza que deseja encerrar este projeto? Não será possível adicionar novos tickets.');">
+                    <button type="submit" class="btn btn-outline-danger">
+                        Encerrar Projeto
+                    </button>
+                </form>
+
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createTicketModal">
+                    + Novo Ticket
+                </button>
+            </div>
+        }
+
+    </div>
+
+    <div class="row flex-nowrap overflow-auto pb-4" style="min-height: 60vh;">
+        @foreach (var status in Model.WorkflowStatuses)
+        {
+            <div class="col-12 col-md-4 col-lg-3 kanban-column"
+                 ondragover="allowDrop(event)"
+                 ondrop="drop(event, this)"
+                 data-status="@status">
+            
+                <div class="bg-light rounded-3 p-3 h-100 d-flex flex-column">
+                    <h6 class="text-uppercase text-muted mb-3">
+                        @status
+                        <span class="badge bg-secondary rounded-pill float-end status-count">
+                            @Model.Tickets.Count(t => t.CurrentStatus == status)
+                        </span>
+                    </h6>
+
+                    <div class="d-flex flex-column gap-2 flex-grow-1 dropzone">
+                        @foreach (var ticket in Model.Tickets.Where(t => t.CurrentStatus == status))
+                        {
+                          
+                            bool canDrag = !Model.EndDate.HasValue && !ticket.IsClosed;
+                            
+
+                            <div class="card shadow-sm border-start border-4 @(ticket.IsBlocked ? "border-danger" : "border-primary") kanban-card @(canDrag ? "" : "opacity-75")"
+                                 draggable="@(canDrag ? "true" : "false")"
+                                 ondragstart="@(canDrag ? "drag(event)" : "return false;")"
+                                 id="ticket-@ticket.Id"
+                                 data-ticket-id="@ticket.Id">
+     
+                                <div class="card-body p-2" style="@(canDrag ? "cursor: grab;" : "cursor: not-allowed;")">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">#@ticket.Id</small>
+                                    </div>
+                                    <h6 class="card-title mb-2" style="font-size: 0.95rem;">@ticket.Title</h6>
+        
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <div class="text-muted small">
+                                            <div class="badge bg-info text-dark rounded-circle me-2" title="@ticket.AssigneeName" style="width: 25px; height: 25px; display: inline-flex; align-items: center; justify-content: center;">
+                                                @(string.IsNullOrEmpty(ticket.AssigneeName) ? "?" : ticket.AssigneeName.Substring(0, 1).ToUpper())
+                                            </div>
+                                        </div>
+            
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" title="Ver Detalhes">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                
+                                            @if (canDrag)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-primary" title="Atribuir Utilizador"
+                                                        onclick="openAssignModal(@ticket.Id)">
+                                                    <i class="bi bi-person-plus"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="modal fade" id="createTicketModal" tabindex="-1" aria-labelledby="createTicketModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createTicketModalLabel">Criar Novo Ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            
+                <form asp-controller="PropostaTicket" asp-action="Create" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+
+                        <div class="mb-3">
+                            <label for="Title" class="form-label fw-bold">Título do Ticket <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="Title" name="Title" required placeholder="Ex: Erro ao logar no sistema" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Description" class="form-label fw-bold">Descrição <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="Description" name="Description" rows="5" required placeholder="Descreva o problema ou tarefa..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="AssigneeId" class="form-label fw-bold">Atribuir a</label>
+                            <select class="form-select" id="AssigneeId" name="AssigneeId">
+                                <option value="">Não atribuído (Deixar em aberto)</option>
+                            </select>
+                        </div>
+                    </div>
+                
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Criar Ticket</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">Atribuir Ticket #<span id="displayTicketId"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="PropostaTicket" asp-action="Assign" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="TicketId" id="assignTicketId" />
+                        <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+                    
+                        <div class="mb-3">
+                            <label class="form-label">Selecionar Responsável</label>
+                            <select name="AssigneeId" class="form-select" asp-items="Model.UsersList" required>
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        // Função para permitir que a coluna receba o item solto
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        // Variável global para guardar de onde o card saiu
+        let originalParent = null;
+
+        // Função chamada quando o usuário começa a arrastar o card
+        function drag(ev) {
+            // Guarda o ID do card HTML que está sendo arrastado
+            ev.dataTransfer.setData("cardId", ev.currentTarget.id);
+            // Guarda o pai (dropzone) atual do card antes de começar a arrastar
+            originalParent = ev.currentTarget.parentNode;
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        // Função para abrir o modal de atribuição e passar o ID do Ticket
+        function openAssignModal(ticketId) {
+            document.getElementById('assignTicketId').value = ticketId;
+            document.getElementById('displayTicketId').innerText = ticketId;
+        
+            var assignModal = new bootstrap.Modal(document.getElementById('assignModal'));
+            assignModal.show();
+        }
+
+        // Função chamada quando o card é solto na coluna
+        function drop(ev, columnElement) {
+            ev.preventDefault();
+    
+            var cardId = ev.dataTransfer.getData("cardId");
+            var cardElement = document.getElementById(cardId);
+            var dropzone = columnElement.querySelector('.dropzone');
+    
+            // Se soltar na mesma coluna de onde saiu, não faz nada
+            if (originalParent === dropzone) return;
+
+            // 1. Move visualmente (para dar a sensação de fluidez)
+            dropzone.appendChild(cardElement);
+
+            var ticketId = cardElement.getAttribute('data-ticket-id');
+            var newStatus = columnElement.getAttribute('data-status');
+            var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        fetch('/PropostaTicket/UpdateStatus', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify({ ticketId: parseInt(ticketId), newStatus: newStatus })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // === INÍCIO DA ATUALIZAÇÃO DOS CONTADORES ===
+        
+                // 1. Encontra a coluna de origem e a coluna de destino
+                let sourceColumn = originalParent.closest('.kanban-column');
+                let targetColumn = columnElement;
+
+                // 2. Encontra os badges (contadores) dentro dessas colunas
+                let sourceBadge = sourceColumn.querySelector('.status-count');
+                let targetBadge = targetColumn.querySelector('.status-count');
+
+                // 3. Atualiza os números (subtrai 1 da origem, soma 1 no destino)
+                if (sourceBadge && targetBadge) {
+                    sourceBadge.innerText = parseInt(sourceBadge.innerText) - 1;
+                    targetBadge.innerText = parseInt(targetBadge.innerText) + 1;
+                }
+        
+                // === FIM DA ATUALIZAÇÃO DOS CONTADORES ===
+            } else {
+                alert(data.message);
+                // Falhou na regra de negócio (ex: não tem Assignee), reverte o card
+                originalParent.appendChild(cardElement);
+            }
+        })
+        .catch(error => {
+            console.error('Erro detalhado:', error);
+            alert("Ocorreu um erro ao atualizar o status. Verifique a consola do navegador.");
+            // Deu erro de servidor, reverte o card
+            originalParent.appendChild(cardElement);
+        });
+        }
+    </script>
+}

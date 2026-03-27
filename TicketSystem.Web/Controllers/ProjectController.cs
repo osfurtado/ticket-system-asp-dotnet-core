@@ -80,7 +80,6 @@ namespace TicketSystem.Web.Controllers
                     Title = viewModel.Title,
                     Description = viewModel.Description,
                     StartDate = viewModel.StartDate,
-                    EndDate = viewModel.EndDate,
                     WorkflowId = viewModel.WorkflowId!.Value,
                     IsDeleted = false
                 };

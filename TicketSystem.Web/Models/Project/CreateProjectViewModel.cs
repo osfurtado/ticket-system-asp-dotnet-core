@@ -12,8 +12,6 @@ namespace TicketSystem.Web.Models.Project
         public string Description { get; set; } = string.Empty;
         [Display(Name = "Start Date")]
         public DateOnly StartDate { get; set; }
-        [Display(Name = "End Date")]
-        public DateOnly EndDate { get; set; }
 
         [Display(Name = "Workflow")]
         public int? WorkflowId { get; set; }
@@ -22,13 +20,15 @@ namespace TicketSystem.Web.Models.Project
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validateContext)
         {
+            // TODO: Move it to Edit Project
+            /*
             if( EndDate <= StartDate)
             {
                 yield return new ValidationResult(
                     "End date must be after Start date",
                     new[] { nameof(EndDate) }
                 );
-            }
+            }*/
 
             if (WorkflowId == null || WorkflowId <= 0)
             {

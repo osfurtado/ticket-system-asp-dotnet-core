@@ -3,8 +3,13 @@
 }
 
 <div class="text-center">
-    <h1 class="text-center mb-5">User Panel</h1>
+    <h1 class="text-center mb-5">My Panel</h1>
     <div class="d-flex justify-content-center gap-5">
-        <a asp-controller="Ticket" asp-action="Create" class="btn btn-primary">Create Ticket</a>
+        <a asp-controller="Ticket" asp-action="Index" class="btn btn-primary">Tickets</a>
+        <a class="btn btn-primary">Messages</a>
+        @if (User?.IsInRole("Admin") ?? false)
+        {
+           <a asp-controller="Home" asp-action="AdminOnly" class="btn btn-primary">Admin Panel</a>
+        }
     </div>
 </div>

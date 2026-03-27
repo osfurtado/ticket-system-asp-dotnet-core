@@ -6,9 +6,10 @@
 
 <h1>Tickets</h1>
 
-<p>
-    <a asp-action="Create"> + New Ticket</a>
-</p>
+<div class="d-flex justify-content-between">
+    <a asp-controller="Home" asp-action="LoginOnly" class="btn btn-secondary">Back</a>
+    <a asp-action="Create" class="btn btn-success"> + New Ticket</a>
+</div>
 <table class="table">
     <thead>
         <tr>

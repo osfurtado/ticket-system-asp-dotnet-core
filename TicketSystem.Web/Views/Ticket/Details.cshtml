@@ -24,20 +24,20 @@
     <div class="row">
         <div class="col-lg-8">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="mb-0">@Model.Title</h2>
+                <h2 class="mb-0">Ticket @Model.Id - @Model.Title</h2>
                 <span class="badge bg-primary fs-6">@Model.CurrentStatus</span>
             </div>
 
             <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title text-muted border-bottom pb-2">Descrição</h5>
+                    <h5 class="card-title text-muted border-bottom pb-2">Description</h5>
                     <p class="card-text mt-3" style="white-space: pre-wrap;">@Model.Description</p>
                 </div>
             </div>
 
             <hr class="my-4" />
 
-            <h4 id="comments" class="mb-3">Comentários (@Model.Comments.Count)</h4>
+            <h4 id="comments" class="mb-3">Comments (@Model.Comments.Count)</h4>
 
             <div class="comments-list mb-4">
                 @if (Model.Comments.Any())
@@ -57,22 +57,22 @@
                 }
                 else
                 {
-                    <p class="text-muted fst-italic">Nenhum comentário adicionado ainda.</p>
+                    <p class="text-muted fst-italic">There are not comments yet</p>
                 }
             </div>
 
             <div class="card shadow-sm border-primary border-opacity-25">
                 <div class="card-body">
-                    <h5 class="card-title">Adicionar Comentário</h5>
+                    <h5 class="card-title">Add Comment</h5>
                     <form asp-action="AddComment" method="post">
                         <input type="hidden" name="TicketId" value="@Model.Id" />
     
                         <div class="form-group mb-3">
-                            <textarea name="Content" class="form-control" rows="3" placeholder="Escreva seu comentário aqui..." required></textarea>
+                            <textarea name="Content" class="form-control" rows="3" placeholder="Write your Commment here..." required></textarea>
                         </div>
                         <div class="text-end">
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-chat-text"></i> Comentar
+                                <i class="bi bi-chat-text"></i> Comment
                             </button>
                         </div>
                     </form>
@@ -84,24 +84,24 @@
             
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Detalhes</h5>
+                    <h5 class="mb-0">Details</h5>
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
                         <li class="mb-2">
-                            <span class="text-muted d-block small">Projeto</span>
+                            <span class="text-muted d-block small">Project</span>
                             <strong>@Model.ProjectName</strong>
                         </li>
                         <li class="mb-2">
-                            <span class="text-muted d-block small">Criado por</span>
+                            <span class="text-muted d-block small">Created By</span>
                             <span>@Model.CreatorName</span>
                         </li>
                         <li class="mb-2">
-                            <span class="text-muted d-block small">Responsável</span>
-                            <span>@(Model.AssigneeName ?? "Não atribuído")</span>
+                            <span class="text-muted d-block small">Assignee</span>
+                            <span>@(Model.AssigneeName ?? "Not assigned")</span>
                         </li>
                         <li>
-                            <span class="text-muted d-block small">Data de Criação</span>
+                            <span class="text-muted d-block small">Created at</span>
                             <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
                         </li>
                     </ul>
@@ -110,7 +110,7 @@
 
             <div class="card shadow-sm">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Anexos</h5>
+                    <h5 class="mb-0">Attachments</h5>
                     <span class="badge bg-secondary">@Model.Attachments.Count</span>
                 </div>
                 <div class="card-body">
@@ -138,7 +138,7 @@
                     }
                     else
                     {
-                        <p class="text-muted small fst-italic">Nenhum arquivo anexado.</p>
+                        <p class="text-muted small fst-italic">There are no files attached yet.</p>
                     }
 
                     <hr />
@@ -147,11 +147,11 @@
                         <input type="hidden" name="TicketId" value="@Model.Id" />
                         
                         <div class="mb-2">
-                            <label class="form-label small text-muted">Anexar novo arquivo</label>
+                            <label class="form-label small text-muted">Attach new file</label>
                             <input class="form-control form-control-sm" type="file" name="File" required />
                         </div>
                         <button type="submit" class="btn btn-sm btn-success w-100">
-                            Fazer Upload
+                            Upload
                         </button>
                     </form>
                 </div>

@@ -1,0 +1,59 @@
+﻿@using TicketSystem.Web.Models.Project.Proposta
+@model ProjectCreateViewModel
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Criar Novo Projeto</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div class="form-floating mb-3">
+                            <input asp-for="Title" class="form-control" placeholder="Nome do Projeto" />
+                            <label asp-for="Title">Título do Projeto</label>
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <textarea asp-for="Description" class="form-control" placeholder="Descrição" style="height: 100px"></textarea>
+                            <label asp-for="Description">Descrição</label>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="StartDate" type="date" class="form-control" />
+                                    <label asp-for="StartDate">Data de Início</label>
+                                    <span asp-validation-for="StartDate" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="WorkflowId" asp-items="Model.WorkflowsList" class="form-select">
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                    <label asp-for="WorkflowId">Workflow</label>
+                                    <span asp-validation-for="WorkflowId" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-light">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Salvar Projeto</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
