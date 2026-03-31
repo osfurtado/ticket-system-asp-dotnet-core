@@ -27,26 +27,26 @@ namespace TicketSystem.Web.Controllers
         // GET: Ticket
         public async Task<IActionResult> Index()
         {
-            var tickets = await _context.Tickets
-                                    .Include(t => t.Assignee)
-                                    .Include(t => t.ClosedBy)
-                                    .Include(t => t.CreatedBy)
-                                    .Include(t => t.Project)
-                                    .Select(t => new DisplayTicketViewModel
-                                    {
-                                        Id = t.Id,
-                                        Title = t.Title,
-                                        Description = t.Description,
-                                        Project = t.Project != null ? t.Project.Title : "No Project",
-                                        CreatedBy = t.CreatedBy != null ? t.CreatedBy.UserName! : "Unknown",
-                                        CreatedAt = t.CreatedAt,
-                                        Assignee = t.Assignee != null ? t.Assignee.UserName! : "Not Assigned",
-                                        AssignedAt = t.AssignedAt,
-                                        ClosedBy = t.ClosedBy != null ? t.ClosedBy.UserName! : "-",
-                                        ClosedAt = t.ClosedAt,
-                                        CurrentStatus = t.CurrentStatus
-                                    }).ToListAsync();
+            // 1. Captura as informações do usuário logado antes da consulta
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin"); // Avaliado na memória (C#)
 
+            // 2. Consulta no banco de dados (sem Include, pois o Select já faz os JOINs necessários)
+            var tickets = await _context.Tickets
+                .Select(t => new DisplayTicketViewModel
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Project = t.Project != null ? t.Project.Title : "No Project",
+                    CreatedBy = t.CreatedBy != null ? t.CreatedBy.UserName! : "Unknown",
+                    CreatedAt = DateOnly.FromDateTime(t.CreatedAt),
+                    Assignee = t.Assignee != null ? t.Assignee.UserName! : "Not Assigned",
+                    CurrentStatus = t.CurrentStatus,
+
+                    // Usamos a variável 'isAdmin' em vez de chamar a função do User aqui dentro
+                    CanChange = isAdmin || currentUserId == t.CreatorId || currentUserId == t.AssigneeId
+                })
+                .ToListAsync();
 
             return View(tickets);
         }
@@ -81,7 +81,7 @@ namespace TicketSystem.Web.Controllers
                 Title = ticketModel.Title,
                 Description = ticketModel.Description,
                 CurrentStatus = ticketModel.CurrentStatus,
-                ProjectName = ticketModel.Project != null ? ticketModel.Project.Title : "No Project",
+                Project = ticketModel.Project,
                 CreatorName = ticketModel.CreatedBy != null ? ticketModel.CreatedBy.UserName! : "Unknown",
                 AssigneeName = ticketModel.Assignee?.UserName,
                 CreatedAt = ticketModel.CreatedAt,
@@ -90,7 +90,7 @@ namespace TicketSystem.Web.Controllers
                             .OrderByDescending(c => c.CreatedAt)
                             .Select(c => new CommentViewModel
                             {
-                                CreatorName = c.Creator?.UserName ?? "Unknown",
+                                CreatorName = c.Creator?.Name ?? "Unknown",
                                 Content = c.Content,
                                 CreatedAt = c.CreatedAt
                             }).ToList(),
@@ -101,7 +101,7 @@ namespace TicketSystem.Web.Controllers
                     {
                         Id = a.Id,
                         Filename = a.Filename,
-                        UploadedByName = a.UploadedBy?.UserName ?? "Unknown",
+                        UploadedByName = a.UploadedBy?.Name ?? "Unknown",
                         UploadedAt = a.UploadedAt
                     }).ToList(),
 

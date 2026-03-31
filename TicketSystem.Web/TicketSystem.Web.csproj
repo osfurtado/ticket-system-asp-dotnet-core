@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Folder Include="Views\Communication\" />
+    <Folder Include="wwwroot\uploads\tickets\" />
   </ItemGroup>
 
   <ItemGroup>

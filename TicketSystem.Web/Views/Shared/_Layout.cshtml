@@ -25,15 +25,24 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                     </ul>
-                    <div class="nav-item">
+                    <div class="nav-item d-flex align-items-center">
                         @if (User?.Identity?.IsAuthenticated ?? false)
                         {
-                            <span>Hallo @User.Identity.Name</span>
-                            <a asp-controller="Account" asp-action="Logout"
-                               class="btn btn-sm btn-outline-dark ms-3">Logout</a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary me-3">
+                                    Manage Users
+                                </a>
+                            }
+
+                            <span class="me-3">Olá, <a asp-controller="Account" asp-action="Profile" class="text-decoration-none">@User.Identity.Name</a>!</span>
+        
+                            <a asp-controller="Account" asp-action="Logout" class="btn btn-sm btn-outline-dark">Logout</a>
                         }
                         else
                         {
+                            <a asp-controller="Account" asp-action="Register" class="btn btn-sm btn-primary me-2">Register</a>
+        
                             <a asp-controller="Account" asp-action="Login"
                                asp-route-returnurl="@ViewContext.HttpContext.Request.Path"
                                class="btn btn-sm btn-outline-dark">Login</a>

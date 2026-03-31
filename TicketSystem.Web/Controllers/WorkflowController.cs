@@ -47,7 +47,14 @@ namespace TicketSystem.Web.Controllers
         public IActionResult Create()
         {
             var viewModel = new WorkflowCreateViewModel();
-            viewModel.Statuses.Add(new WorkflowStatusViewModel());
+
+            // Inicia a View já com o Open e o Close
+            viewModel.Statuses = new List<WorkflowStatusViewModel>
+            {
+                new WorkflowStatusViewModel { Name = "Open", IsInicial = true, IsFinal = false },
+                new WorkflowStatusViewModel { Name = "Close", IsInicial = false, IsFinal = true }
+            };
+
             return View(viewModel);
         }
 
@@ -70,8 +77,12 @@ namespace TicketSystem.Web.Controllers
                     status.IsInicial = false;
                     status.IsFinal = false;
                 }
-
+                // Força o primeiro a ser Inicial (Open) e o último a ser Final (Close)
+                // Isso protege caso o usuário manipule o HTML no navegador
+                viewModel.Statuses.First().Name = "Open";
                 viewModel.Statuses.First().IsInicial = true;
+
+                viewModel.Statuses.Last().Name = "Close";
                 viewModel.Statuses.Last().IsFinal = true;
             }
 
@@ -94,7 +105,7 @@ namespace TicketSystem.Web.Controllers
                 await _context.SaveChangesAsync();
 
                 // Mensagem de sucesso opcional para mostrar na próxima tela
-                TempData["SuccessMessage"] = "Workflow criado com sucesso!";
+                TempData["SuccessMessage"] = "Workflow created Successfully!";
 
                 return RedirectToAction(nameof(Index)); // Redireciona para a listagem
             }

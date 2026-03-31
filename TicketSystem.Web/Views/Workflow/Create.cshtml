@@ -31,6 +31,29 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @if (Model.Statuses != null)
+                    {
+                        for (int i = 0; i < Model.Statuses.Count; i++)
+                        {
+                            var isFixed = (Model.Statuses[i].Name == "Open" || Model.Statuses[i].Name == "Close");
+                            <tr class="@(isFixed ? "fixed-row" : "custom-row")">
+                                <td class="status-name-cell">
+                                    @Model.Statuses[i].Name
+                                    <input type="hidden" class="status-hidden-name" name="Statuses[@i].Name" value="@Model.Statuses[i].Name" />
+                                </td>
+                                <td>
+                                    @if (!isFixed)
+                                    {
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="removeStatus(this)">Remove</button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Fixo</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
                 </tbody>
             </table>
             <div class="form-group">
@@ -62,32 +85,29 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">Back</a>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script>
         function addStatus() {
             const nameInput = document.getElementById('newStatusName');
             const nameValue = nameInput.value.trim();
             const errorSpan = document.getElementById('modalError');
 
-            // Validação simples no client-side
             if (!nameValue) {
                 errorSpan.style.display = 'block';
                 return;
             }
             errorSpan.style.display = 'none';
 
-            // Seleciona o corpo da tabela
             const tbody = document.querySelector('#statusTable tbody');
             
-            // Cria uma nova linha (tr)
             const tr = document.createElement('tr');
-            
-            // Monta o HTML da linha. O input hidden é essencial para o Model Binding!
-            // Usamos uma classe 'status-row' para facilitar a reindexação depois.
+            tr.className = 'custom-row';
             tr.innerHTML = `
                 <td class="status-name-cell">
                     ${nameValue}
@@ -98,35 +118,34 @@
                 </td>
             `;
             
-            tbody.appendChild(tr);
+            // LÓGICA MUDADA AQUI:
+            // Pegamos todas as linhas atuais e encontramos a última (que é o 'Close')
+            const rows = tbody.querySelectorAll('tr');
+            const lastRow = rows[rows.length - 1];
+            
+            // Insere a nova linha ANTES da última linha ('Close')
+            tbody.insertBefore(tr, lastRow);
 
-            // Limpa o input do modal
             nameInput.value = '';
 
-            // Fecha o modal usando a API do Bootstrap 5
             const modalElement = document.getElementById('statusModal');
-            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
             modalInstance.hide();
 
-            // Atualiza os índices para o ASP.NET Core
             reindexStatuses();
         }
 
         function removeStatus(button) {
-            // Remove a linha (tr) que contém o botão clicado
             const row = button.closest('tr');
             row.remove();
-            
-            // Reindexa a lista para não pular números (0, 1, 2...)
             reindexStatuses();
         }
 
         function reindexStatuses() {
-            // Pega todas as linhas adicionadas
             const rows = document.querySelectorAll('#statusTable tbody tr');
             
+            // Isso vai reindexar o Open como [0], os do meio como [1, 2, ...] e o Close como [último]
             rows.forEach((row, index) => {
-                // Atualiza o atributo 'name' do input oculto para seguir o padrão do MVC
                 const hiddenInput = row.querySelector('.status-hidden-name');
                 if (hiddenInput) {
                     hiddenInput.setAttribute('name', `Statuses[${index}].Name`);
@@ -134,7 +153,6 @@
             });
         }
         
-        // Foca automaticamente no input quando o modal abre (Melhor UX)
         document.getElementById('statusModal').addEventListener('shown.bs.modal', function () {
             document.getElementById('newStatusName').focus();
         });

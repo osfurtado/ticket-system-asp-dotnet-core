@@ -7,28 +7,26 @@ namespace TicketSystem.Web.Models
 {
     public static class EnsureDatabase
     {
+        // Definimos as Roles num array para facilitar a iteração e futura manutenção
+        private static readonly string[] _roles = { "Admin", "Tester", "Developer" };
 
-        private const string adminRole = "Admin";
-        private const string userRole = "User";
-
-        private const string adminName = "Admin";
-        private const string userName = "User";
-
-        private const string password = "Secret123$";
+        // Dados do utilizador a ser criado
+        private const string AdminUserName = "ofurtado";
+        private const string AdminFullName = "Osvaldo Furtado";
+        private const string DefaultPassword = "Secret123$";
 
         public static void Migrate(IApplicationBuilder app)
         {
-            var ctx = app.ApplicationServices
-                            .CreateScope()
-                            .ServiceProvider
-                            .GetRequiredService<AppDbContext>();
+            using var scope = app.ApplicationServices.CreateScope();
+            var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
             if (ctx.Database.GetPendingMigrations().Any())
             {
                 ctx.Database.Migrate();
             }
         }
-        public async static Task SeedDefaultAccounts(IApplicationBuilder app)
+
+        public static async Task SeedDefaultAccounts(IApplicationBuilder app)
         {
             using var scope = app.ApplicationServices.CreateScope();
             var services = scope.ServiceProvider;
@@ -36,33 +34,36 @@ namespace TicketSystem.Web.Models
             var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
             var userManager = services.GetRequiredService<UserManager<AppUser>>();
 
-            if (!await roleManager.RoleExistsAsync(adminRole))
+            // 1. Seed 3 Roles (Admin, Tester, Developer)
+            foreach (var roleName in _roles)
             {
-                var role = new AppRole() { Name = adminRole };
-                await roleManager.CreateAsync(role);
-            }
-            if (!await roleManager.RoleExistsAsync(userRole))
-            {
-                var role = new AppRole() { Name = userRole };
-                await roleManager.CreateAsync(role);
+                if (!await roleManager.RoleExistsAsync(roleName))
+                {
+                    var role = new AppRole() { Name = roleName };
+                    await roleManager.CreateAsync(role);
+                }
             }
 
+            // 2. Seed apenas do utilizador 'ofurtado'
+            var adminUser = await userManager.FindByNameAsync(AdminUserName);
+            if (adminUser == null)
+            {
+                adminUser = new AppUser()
+                {
+                    UserName = AdminUserName,
+                    // Assumindo que a sua classe AppUser tem a propriedade Name. 
+                    // Se for FirstName/LastName, ajuste de acordo.
+                    Name = AdminFullName
+                };
 
-            var admin = await userManager.FindByNameAsync(adminName);
-            if (admin == null)
-            {
-                admin = new AppUser() { UserName = adminName };
-                await userManager.CreateAsync(admin, password);
-                await userManager.AddToRolesAsync(admin, [adminRole, userRole]);
-            }
-            var user = await userManager.FindByNameAsync(userName);
-            if (user == null)
-            {
-                user = new AppUser() { UserName = userName };
-                await userManager.CreateAsync(user, password);
-                await userManager.AddToRoleAsync(user, userRole);
+                var createResult = await userManager.CreateAsync(adminUser, DefaultPassword);
+
+                // Apenas adicionamos a Role se a criação do utilizador for bem-sucedida
+                if (createResult.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
             }
         }
-
     }
 }

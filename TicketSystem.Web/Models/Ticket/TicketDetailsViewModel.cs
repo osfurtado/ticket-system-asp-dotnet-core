@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using TicketSystem.Web.Models.Project;
 
 namespace TicketSystem.Web.Models.Ticket
 {
@@ -8,7 +9,7 @@ namespace TicketSystem.Web.Models.Ticket
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string CurrentStatus { get; set; } = string.Empty;
-        public string ProjectName { get; set; } = string.Empty;
+        public ProjectModel? Project { get; set; }
         public string CreatorName { get; set; } = string.Empty;
         public string? AssigneeName { get; set; }
         public DateTime CreatedAt { get; set; }

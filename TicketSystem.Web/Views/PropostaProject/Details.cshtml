@@ -20,7 +20,7 @@
                 <form asp-controller="PropostaProject" asp-action="Close" asp-route-id="@Model.ProjectId" method="post"
                       onsubmit="return confirm('Tem a certeza que deseja encerrar este projeto? Não será possível adicionar novos tickets.');">
                     <button type="submit" class="btn btn-outline-danger">
-                        Encerrar Projeto
+                        Finish Project
                     </button>
                 </form>
 
@@ -75,9 +75,13 @@
                                         </div>
             
                                         <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" title="Ver Detalhes">
+                                            <a asp-controller="Ticket"
+                                                   asp-action="Details"
+                                                   asp-route-id="@ticket.Id"
+                                                   class="btn btn-sm btn-outline-secondary"
+                                                   title="Ver Detalhes">
                                                 <i class="bi bi-eye"></i>
-                                            </button>
+                                            </a>
                 
                                             @if (canDrag)
                                             {
