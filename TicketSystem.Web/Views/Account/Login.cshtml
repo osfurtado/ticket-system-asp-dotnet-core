@@ -17,27 +17,27 @@
     <style>
         body { background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
         .login-card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    </style>
+    </style> 
 </head>
 <body>
     <div class="login-card">
-        <i class="bi bi-ticket-detailed text-primary" style="font-size: 4rem;"></i>
+        <i class="bi bi-kanban text-primary" style="font-size: 4rem;"></i>
         <h3 class="mb-4 mt-2">Ticket System</h3>
 
         <form asp-controller="Account" asp-action="Login" method="post" class="text-start">
             <input type="hidden" asp-for="ReturnUrl" />
             <div class="mb-3">
                 <label asp-for="Username" class="form-label text-muted"></label>
-                <input asp-for="Username" class="form-control form-control-lg" placeholder="Enter username" />
+                <input asp-for="Username" class="form-control form-control-sm" placeholder="Enter username" />
                 <span asp-validation-for="Username" class="text-danger small"></span>
             </div>
             <div class="mb-4">
                 <label asp-for="Password" class="form-label text-muted"></label>
-                <input type="password" asp-for="Password" class="form-control form-control-lg" placeholder="Enter password" />
+                <input type="password" asp-for="Password" class="form-control form-control-sm" placeholder="Enter password" />
                 <span asp-validation-for="Password" class="text-danger small"></span>
             </div>
             <div class="text-danger mb-3" asp-validation-summary="ModelOnly"></div>
-            <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
+            <button type="submit" class="btn btn-primary btn-sm w-100">Login</button>
         </form>
     </div>
 </body>
