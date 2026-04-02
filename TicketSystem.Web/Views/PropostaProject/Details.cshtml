@@ -1,7 +1,7 @@
 ﻿@using TicketSystem.Web.Models.Project.Proposta
 @model ProjectBoardViewModel
 
-<div class="container-fluid mt-4">
+<div class="container-fluid mt-2">
     <div>
         <h2>
             @Model.ProjectTitle
@@ -13,7 +13,7 @@
             <span class="text-muted">Ended at: @Model.EndDate</span>
         }
     </div>
-    <div class="d-flex justify-content-between align-items-center my-3">
+    <div class="d-flex justify-content-between align-items-center my-5">
             <a asp-action="Index" class="btn btn-secondary">Back</a>
             @if (!Model.EndDate.HasValue)
             {
@@ -31,10 +31,8 @@
                 </div>
             }
 
-
-
     </div>
-
+    
     <div class="row flex-nowrap overflow-auto pb-4" style="min-height: 60vh;">
         @foreach (var status in Model.WorkflowStatuses)
         {
@@ -43,7 +41,7 @@
                  ondrop="drop(event, this)"
                  data-status="@status">
             
-                <div class="bg-light rounded-3 p-3 h-100 d-flex flex-column">
+                <div class="bg-dark-subtle rounded-3 p-3 h-100 d-flex flex-column">
                     <h6 class="text-uppercase text-muted mb-3">
                         @status
                         <span class="badge bg-secondary rounded-pill float-end status-count">
@@ -104,7 +102,7 @@
         }
     </div>
     <div class="modal fade" id="createTicketModal" tabindex="-1" aria-labelledby="createTicketModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="createTicketModalLabel">Create new ticket</h5>
@@ -142,7 +140,7 @@
         </div>
     </div>
     <div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <div class="modal-header">
                     <h6 class="modal-title">Assign Ticket Ticket #<span id="displayTicketId"></span></h6>

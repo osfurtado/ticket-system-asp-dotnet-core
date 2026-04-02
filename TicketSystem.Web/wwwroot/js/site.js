@@ -3,6 +3,8 @@
 
 // Write your JavaScript code.
 
+
+
 document.addEventListener("DOMContentLoaded", function () {
     // 1. Sidebar Toggle
     const sidebarToggle = document.getElementById("sidebarToggle");

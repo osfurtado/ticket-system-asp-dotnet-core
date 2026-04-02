@@ -4,14 +4,13 @@
     ViewData["Title"] = "Ticket List";
 }
 
-<h1>Tickets</h1>
+<h2>Tickets</h2>
 
-<div class="d-flex justify-content-between my-3">
-    <a asp-controller="Home" asp-action="LoginOnly" class="btn btn-secondary">Back</a>
+<div class="d-flex justify-content-end my-3">
     <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg"></i> New Ticket</a>
 </div>
 
-<div class="card mb-4 bg-light shadow-sm">
+<div class="card mb-4 bg-light-subtle shadow-sm">
     <div class="card-body">
         <form method="get" asp-action="Index">
             <div class="row g-3 align-items-end">
@@ -86,25 +85,19 @@
     <table class="table table-striped table-hover align-middle shadow-sm">
         <thead class="table-dark">
             <tr>
-                <th style="width: 40px;"></th>
                 <th>@Html.DisplayNameFor(model => model.Title)</th>
                 <th>@Html.DisplayNameFor(model => model.CreatedAt)</th>
                 <th>@Html.DisplayNameFor(model => model.CreatedBy)</th>
                 <th>@Html.DisplayNameFor(model => model.Project)</th>
                 <th>@Html.DisplayNameFor(model => model.Assignee)</th>
                 <th>@Html.DisplayNameFor(model => model.CurrentStatus)</th>
-                <th style="width: 40px;"></th>
+                <th style="width: 80px;"></th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in Model)
             {
                 <tr>
-                    <td class="text-center">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="View Details">
-                            <i class="bi bi-eye fs-5"></i>
-                        </a>
-                    </td>
                     <td>@Html.DisplayFor(modelItem => item.Title)</td>
                     <td>@Html.DisplayFor(modelItem => item.CreatedAt)</td>
                     <td>@Html.DisplayFor(modelItem => item.CreatedBy)</td>
@@ -126,27 +119,32 @@
                     </td>
                     
                     <td class="text-center">
-                        @if (item.CanChange)
-                        {
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-link text-secondary text-decoration-none p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-three-dots-vertical fs-5"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow">
-                                    <li>
-                                        <a class="dropdown-item text-sm-start" asp-action="Edit" asp-route-id="@item.Id">
-                                            <i class="bi bi-pencil-square me-2 text-primary"></i> Update
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item text-danger text-sm-start" asp-action="Delete" asp-route-id="@item.Id">
-                                            <i class="bi bi-trash me-2"></i> Delete
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        }
+                        <div class="d-flex gap-2">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="text-sm text-secondary" title="View Details">
+                                <i class="bi bi-eye-fill fs-5"></i>
+                            </a>
+                            @if (item.CanChange)
+                            {
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-link text-secondary text-decoration-none p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical fs-5"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                        <li>
+                                            <a class="dropdown-item text-sm-start" asp-action="Edit" asp-route-id="@item.Id">
+                                                <i class="bi bi-pencil-square me-2 text-primary"></i> Update
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger text-sm-start" asp-action="Delete" asp-route-id="@item.Id">
+                                                <i class="bi bi-trash me-2"></i> Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                        </div>
                     </td>
                 </tr>
             }
