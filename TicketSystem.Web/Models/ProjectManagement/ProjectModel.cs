@@ -28,6 +28,8 @@ namespace TicketSystem.Web.Models.ProjectManagement
 
         public bool IsDeleted { get; set; }
 
+        public Guid? InviteToken { get; set; }
+
         public virtual ICollection<TicketModel> Tickets { get; set; } = [];
 
         public virtual ICollection<ProjectMember> Members { get; set; } = [];

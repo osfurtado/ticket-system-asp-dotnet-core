@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Sockets;
@@ -219,24 +220,6 @@ namespace TicketSystem.Web.Controllers
         }
 
 
-
-        // GET: Ticket/Create : TODO : Not Used
-        public async Task<IActionResult> Create()
-        {
-            var users = await _context.Users.ToListAsync();
-            var projects = await _context.Projects.ToListAsync();
-
-            var viewModel = new TicketCreateViewModel
-            {
-                Projects = projects.Select(p => new SelectListItem
-                {
-                    Value = p.Id.ToString(),
-                    Text = p.Title
-                }),
-            };
-            return View(viewModel);
-        }
-
         // POST: Ticket/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -285,7 +268,6 @@ namespace TicketSystem.Web.Controllers
             await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
-
 
         // CREATE PARTIAL: Fetches the Create Form to put inside the Modal
         public async Task<IActionResult> CreatePartial()
@@ -341,11 +323,23 @@ namespace TicketSystem.Web.Controllers
                 return PartialView("_EditTicketModalPartial", viewModel);
             }
 
-            var ticketFromDB = await _context.Tickets.FindAsync(id);
+            var ticketFromDB = await _context.Tickets.Include(t => t.Project).FirstOrDefaultAsync(t => t.Id == viewModel.Id);
 
             if (ticketFromDB == null)
             {
                 return NotFound();
+            }
+
+            // Rejects if Project is Ended or Ticket is Closed
+            if (ticketFromDB.Project!.EndDate.HasValue || ticketFromDB.ClosedAt.HasValue)
+            {
+                return Json(new { success = false, message = "Not Allowed: Project is Ended or Ticket is Closed." });
+            }
+
+            // Can only update status if the ticket is assigned to someone
+            if (viewModel.CurrentStatus != "Open" & string.IsNullOrEmpty(ticketFromDB.AssigneeId))
+            {
+                return Json(new { success = false, message = "Ticket must be Assigned" });
             }
 
             ticketFromDB.Title = viewModel.Title;
@@ -401,7 +395,6 @@ namespace TicketSystem.Web.Controllers
             return PartialView("_EditTicketModalPartial", ticketData);
         }
 
-
         [HttpGet]
         public async Task<IActionResult> AddDependencyPartial(int ticketId)
         {
@@ -451,7 +444,6 @@ namespace TicketSystem.Web.Controllers
             return PartialView("_AddDependencyTicketPartial", model);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddDependency(TicketAddDependencyViewModel model)
@@ -489,8 +481,6 @@ namespace TicketSystem.Web.Controllers
             return RedirectToAction(nameof(Details), new { id = model.BlockedTicketId });
         }
 
-
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveDependency(int blockedId, int blockingId)
@@ -509,42 +499,105 @@ namespace TicketSystem.Web.Controllers
         }
 
 
-
-        // GET: Ticket/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        [HttpPost]
+        public async Task<IActionResult> UpdateStatus([FromBody] UpdateTicketStatusRequest request)
         {
-            if (id == null)
+            if (request == null || request.TicketId <= 0 || string.IsNullOrEmpty(request.NewStatus))
             {
-                return NotFound();
+                return BadRequest(new { success = false, message = "Invalid Data." });
             }
 
-            var ticketModel = await _context.Tickets
-                .Include(t => t.Assignee)
-                .Include(t => t.ClosedBy)
-                .Include(t => t.CreatedBy)
-                .Include(t => t.Project)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (ticketModel == null)
+            var ticket = await _context.Tickets.Include(t => t.Project).FirstOrDefaultAsync(t => t.Id == request.TicketId);
+
+            if (ticket == null)
             {
-                return NotFound();
+                return NotFound(new { success = false, message = "Ticket not found." });
             }
 
-            return View(ticketModel);
+            // Rejects if Project is Ended or Ticket is Closed
+            if (ticket.Project!.EndDate.HasValue || ticket.ClosedAt.HasValue)
+            {
+                return Json(new { success = false, message = "Not Allowed: Project is Ended or Ticket is Closed." });
+            }
+
+            // Can only update status if the ticket is assigned to someone
+            if (string.IsNullOrEmpty(ticket.AssigneeId))
+            {
+                return Json(new { success = false, message = "Ticket must be Assigned" });
+            }
+
+            // Update status
+            ticket.CurrentStatus = request.NewStatus;
+
+            if (request.NewStatus.ToLower() == "closed") { ticket.ClosedAt = DateTime.Now; }
+
+            _context.Tickets.Update(ticket);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Status updated successfully" });
         }
 
-        // POST: Ticket/Delete/5
-        [HttpPost, ActionName("Delete")]
+
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Assign(int id, TicketAssignViewModel viewModel)
         {
-            var ticketModel = await _context.Tickets.FindAsync(id);
-            if (ticketModel != null)
+            if(id != viewModel.Id)
             {
-                _context.Tickets.Remove(ticketModel);
+                return NotFound();
             }
 
+            var ticket = await _context.Tickets.Include(t => t.Project).FirstOrDefaultAsync(t => t.Id == id);
+
+            if(ticket == null)
+            {
+                return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var usersList = await _context.Users
+                            .Select(u => new SelectListItem { Value = u.Id, Text = u.UserName })
+                            .ToListAsync();
+                viewModel.UsersList = usersList;
+                return PartialView("_EditTicketModalPartial", viewModel);
+            }
+
+            if (ticket.Project!.EndDate.HasValue || ticket.ClosedAt.HasValue)
+            {
+                return Json(new { success = false, message = "Not Allowed: Project is Ended or Ticket is Closed." });
+            }
+
+            ticket.AssigneeId = viewModel.AssigneeId;
+            ticket.AssignedAt = DateTime.Now;
+
+            _context.Tickets.Update(ticket);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return Json(new { success = true });
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> AssignPartial(int id)
+        {
+            // Checks
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == id);
+
+            if(ticket == null) return NotFound();
+
+            var usersList = await _context.Users
+                    .Select(u => new SelectListItem { Value = u.Id, Text = u.UserName })
+                    .ToListAsync();
+
+            var viewModel = new TicketAssignViewModel
+            {
+                Id = ticket.Id,
+                AssigneeId = ticket.AssigneeId,
+                UsersList = usersList
+            };
+
+            return PartialView("_AssignTicketModalPartial", viewModel);
         }
 
         private bool TicketModelExists(int id)

@@ -14,6 +14,8 @@ namespace TicketSystem.Web.Models.Workflow
         public bool IsInicial { get; set; }
         public bool IsFinal { get; set; }
 
+        public int OrderIndex { get; set; }
+
         public virtual ICollection<WorkflowStatusTransition> PreviousStatuses { get; set; } = [];
         public virtual ICollection<WorkflowStatusTransition> NextStatuses { get; set; } = [];
 

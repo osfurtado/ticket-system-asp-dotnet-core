@@ -96,14 +96,17 @@ namespace TicketSystem.Web.Controllers
                 ProjectTitle = project.Title,
                 WorkflowName = project.Workflow?.Name ?? "",
                 EndDate = project.EndDate,
-                WorkflowStatuses = project.Workflow?.Statuses.Select(s => s.Name).ToList() ?? new List<string>(),
-
+                WorkflowStatuses = project.Workflow?.Statuses
+                                                .OrderByDescending(s => s.IsInicial)
+                                                .ThenBy(s => s.IsFinal)
+                                                .ThenBy(s => s.OrderIndex)
+                                                .Select(s => s.Name).ToList() ?? new List<string>(),
                 Tickets = project.Tickets.Select(t => new TicketCardViewModel
                 {
                     Id = t.Id,
                     Title = t.Title,
                     CurrentStatus = t.CurrentStatus,
-                    AssigneeName = t.Assignee?.UserName ?? "Não atribuído",
+                    AssigneeName = t.Assignee?.UserName ?? "Not assigned",
                     CommentsCount = t.Comments.Count,
                     AttachmentsCount = t.Attachments?.Count ?? 0,
                     IsClosed = t.ClosedAt.HasValue,

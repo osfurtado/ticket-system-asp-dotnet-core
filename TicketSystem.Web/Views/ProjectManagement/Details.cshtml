@@ -7,7 +7,7 @@
 <div class="container mt-1">
     <div class="d-flex gap-2">
         <a asp-action="Index" class="btn btn-outline-success"><i class="bi bi-chevron-left"></i> All</a>
-        <h4 class="mb-0">Project: @Model.Title</h4>
+        <h3 class="mb-0">Project: @Model.Title</h3>
     </div>
     <ul class="nav nav-tabs mt-2" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
@@ -79,16 +79,19 @@
         
         <!-- MEMBERS TAB -->
         <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="members-tab">
-            <div class="d-flex justify-content-between gap-3 mt-3 mb-4">
-                <h3>List of Members</h3>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-secondary">Invite Link</button>
-                    <button class="btn btn-primary">Add Member</button>
+            <div class="col">
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between gap-3 mt-4 mb-3">
+                        <h5>List of Members</h5>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                                <i class="bi bi-link-45deg"></i> Invite Link
+                            </button>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMemberModal"><i class="bi bi-plus-lg"></i> Add Member</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <!-- col-12 for mobile (full width), col-lg-3 for large screens (1/4 width) -->
-                <div class="col-12 col-lg-3">
+                <div class="col-md-4">
                         @foreach (var member in Model.ExistingMembers)
                         {
                             <div class="list-group-item list-group-item-action d-flex align-items-center p-2 border-start-0 border-end-0 border-top-0">
@@ -109,6 +112,8 @@
                                 </div>
 
                                 <!-- Dropdown Menu -->
+                            @if (member.MemberId != Model.CurrentUserId)
+                            {
                                 <div class="dropdown flex-shrink-0">
                                     <button class="btn btn-sm btn-link text-muted p-1" type="button" data-bs-toggle="dropdown">
                                         <i class="bi bi-three-dots-vertical"></i>
@@ -119,8 +124,8 @@
                                                 <input type="hidden" name="projectId" value="@Model.ProjectId" />
                                                 <input type="hidden" name="memberId" value="@member.MemberId" />
                                                 <input type="hidden" name="newRole" value="@(member.RoleInProject == "Manager" ? "Member" : "Manager")" />
-                                                <button type="submit" class="dropdown-item">
-                                                    @(member.RoleInProject == "Manager" ? "Demote to Member" : "Promote to Manager")
+                                                <button type="submit" class="dropdown-item btn-sm text-sm">
+                                                    @(        member.RoleInProject == "Manager" ? "Demote to Member" : "Promote to Manager")
                                                 </button>
                                             </form>
                                         </li>
@@ -129,12 +134,17 @@
                                             <form asp-action="RemoveMember" method="post">
                                                 <input type="hidden" name="projectId" value="@Model.ProjectId" />
                                                 <input type="hidden" name="memberId" value="@member.MemberId" />
-                                                <button type="submit" class="dropdown-item text-danger">Remove User</button>
+                                                <button type="submit" class="dropdown-item text-danger btn-sm text-sm">Remove Member</button>
                                             </form>
                                         </li>
                                     </ul>
                                 </div>
-                            </div>
+                            }
+                            else
+                            {
+                                <div class="flex-shrink-0" style="width: 28px;"></div>
+                            }
+                        </div>
                         }
                 </div>
             </div>
@@ -142,155 +152,274 @@
         
         <!-- WORKFLOW TAB -->
         <div class="tab-pane fade" id="workflow" role="tabpanel" aria-labelledby="workflow-tab">
-           <h2 class="my-3">Workflow</h2>
-            <div class="row">
-                <div class="col-md-4">
-                    <form asp-action="Create" method="post" id="workflowForm">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <div class="form-group mb-3">
-                            <label asp-for="@Model.AddStatusForm.Name" class="control-label mb-3"></label>
-                            <input asp-for="@Model.AddStatusForm.Name" class="form-control" />
-                            <span asp-validation-for="@Model.AddStatusForm.Name" class="text-danger"></span>
+            <h5 class="mt-4 mb-3">Statuses</h5>
+            <div class="card shadow-sm col-lg-6">
+                <div class="card-header">
+                    <h6 class="mb-0">Workflow Steps</h6>
+                </div>
+    
+                <div class="list-group list-group-flush">
+        
+                    <!-- FIXED START -->
+                    <div class="list-group-item bg-light-subtle text-muted d-flex align-items-center p-3">
+                        <i class="bi bi-play-circle-fill text-success me-3 fs-5"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">Open</h6>
+                            <small>Initial Status (System Locked)</small>
                         </div>
-                        <hr />
-                        <div class="d-flex justify-content-between">
-                            <h4>Create Status</h4>
-                            <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#statusModal">
-                                Add Status
-                            </button>
+                    </div>
+
+                    <!-- DRAGGABLE MIDDLE STATUSES -->
+                    <!-- We give this div an ID so our JavaScript can make it sortable -->
+                    <div id="sortable-statuses">
+                        @foreach (var status in Model.WorkflowStatuses.Where(s => !s.IsInicial && !s.IsFinal).OrderBy(s => s.OrderIndex))
+                        {
+                            <div class="list-group-item d-flex align-items-center p-3" data-status-id="@status.StatusId">
+                                <!-- Drag Handle -->
+                                <i class="bi bi-grip-vertical text-muted me-3 cursor-grab" style="cursor: grab;"></i>
+                    
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">@status.Name</h6>
+                                </div>
+
+                                <!-- Delete Action -->
+                                <form asp-action="RemoveWorkflowStatus" method="post" class="m-0">
+                                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                                    <input type="hidden" name="statusId" value="@status.StatusId" />
+                                    <button type="submit" class="btn btn-sm btn-link text-danger shadow-none p-0" title="Remove">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- INLINE ADD NEW STATUS -->
+                    <div class="list-group-item p-3 border-top-0">
+                        <form asp-action="AddWorkflowStatus" method="post" class="d-flex gap-2">
+                            <input type="hidden" name="WorkflowId" value="@Model.WorkflowId" />
+                            <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+                            <input type="text" name="Name" class="form-control form-control-sm" placeholder="Type new status name..." required />
+                            <button type="submit" class="btn btn-sm btn-primary text-nowrap">Add Step</button>
+                        </form>
+                    </div>
+
+                    <!-- FIXED END -->
+                    <div class="list-group-item bg-light-subtle text-muted d-flex align-items-center p-3">
+                        <i class="bi bi-stop-circle-fill text-secondary me-3 fs-5"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">Closed</h6>
+                            <small>Final Status (System Locked)</small>
                         </div>
-                        <table class="table table-bordered" id="statusTable">
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th style="width: 100px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (Model.WorkflowStatuses != null)
-                                {
-                                    for (int i = 0; i < Model.WorkflowStatuses.Count; i++)
-                                    {
-                                        var isFixed = (Model.WorkflowStatuses[i].Name == "Open" || Model.WorkflowStatuses[i].Name == "Closed");
-                                        <tr class="@(isFixed ? "fixed-row" : "custom-row")">
-                                            <td class="status-name-cell">
-                                                @Model.WorkflowStatuses[i].Name
-                                                <input type="hidden" class="status-hidden-name" name="Statuses[@i].Name" value="@Model.WorkflowStatuses[i].Name" />
-                                            </td>
-                                            <td>
-                                                @if (!isFixed)
-                                                {
-                                                    <button type="button" class="btn btn-danger btn-sm" onclick="removeStatus(this)">Remove</button>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">Fixed</span>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
-                        </table>
-                        <div class="form-group">
-                            <input type="submit" value="Create" class="btn btn-primary mt-4" />
-                        </div>
-                    </form>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+
+<!-- MEMBERS TAB - Modals  -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="statusModalLabel">New Status</h5>
+                <h5 class="modal-title" id="addMemberModalLabel">Add new Member</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="newStatusName" class="form-label">Status</label>
-                    <input type="text" class="form-control" id="newStatusName" placeholder="Ex: Testing">
-                    <span id="modalError" class="text-danger" style="display:none;">Name is required.</span>
+            <form asp-action="AddMember" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                    <input type="hidden" name="ProjectId" value="@Model.AddMemberForm.ProjectId" />
+                    <div class="mb-3">
+                        <label asp-for="AddMemberForm.SelectedUserId" class="form-label"></label>
+                        <select name="SelectedUserId" class="form-select" asp-items="Model.AddMemberForm.AvailableUsers">
+                            <option value="">-- Select Member --</option>
+                        </select>
+                        <span asp-validation-for="AddMemberForm.SelectedUserId" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="AddMemberForm.SelectedRole" class="form-label"></label>
+                        <select name="SelectedRole" class="form-select" asp-items="Model.AddMemberForm.AvailableRoles">
+                            <option value="">-- Select Role --</option>
+                        </select>
+                        <span asp-validation-for="AddMemberForm.SelectedRole" class="text-danger"></span>
+                    </div>
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inviteModalLabel">Invite to Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="addStatus()">Add</button>
+            <div class="modal-body text-center">
+                <p class="text-muted mb-4">Generate a link to share with others. Anyone with this link can join the project as a Member.</p>
+                
+                <!-- This form is used to securely POST the request -->
+                <form id="generateLinkForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="inviteProjectId" value="@Model.ProjectId" />
+                    <button type="submit" class="btn btn-primary mb-3" id="generateLinkBtn">
+                        Generate Link
+                    </button>
+                </form>
+
+                <!-- Hidden by default, shown when the link is generated -->
+                <div id="linkContainer" class="d-none">
+                    <div class="input-group mb-3">
+                        <input type="text" id="inviteUrlInput" class="form-control" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="copyLinkBtn" title="Copy to clipboard">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <span id="copySuccessMsg" class="text-success small d-none"><i class="bi bi-check-circle"></i> Copied to clipboard!</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
-        function addStatus() {
-            const nameInput = document.getElementById('newStatusName');
-            const nameValue = nameInput.value.trim();
-            const errorSpan = document.getElementById('modalError');
-
-            if (!nameValue) {
-                errorSpan.style.display = 'block';
-                return;
+        document.addEventListener("DOMContentLoaded", function () {
+            let hash = window.location.hash;
+            if (hash) {
+                let triggerEl = document.querySelector('button[data-bs-target="' + hash + '"]');
+                if (triggerEl) {
+                    let tab = new bootstrap.Tab(triggerEl);
+                    tab.show();
+                }
             }
-            errorSpan.style.display = 'none';
+            let tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+            tabElements.forEach(function (tabEl) {
+                tabEl.addEventListener('shown.bs.tab', function (event) {
+                    let target = event.target.getAttribute("data-bs-target");
+                    history.replaceState(null, null, target);
+                });
+            });
 
-            const tbody = document.querySelector('#statusTable tbody');
+            // --- INVITE LINK LOGIC ---
+            const generateForm = document.getElementById('generateLinkForm');
+            const generateBtn = document.getElementById('generateLinkBtn');
+            const linkContainer = document.getElementById('linkContainer');
+            const inviteUrlInput = document.getElementById('inviteUrlInput');
+            const copyLinkBtn = document.getElementById('copyLinkBtn');
+            const copySuccessMsg = document.getElementById('copySuccessMsg');
+
+            // 1. Generate the Link
+            generateForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                
+                const projectId = document.getElementById('inviteProjectId').value;
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                // Create FormData to send the AntiForgeryToken and ProjectId
+                const formData = new FormData();
+                formData.append('projectId', projectId);
+                formData.append('__RequestVerificationToken', token);
+
+                try {
+                    // Disable button and show loading state
+                    generateBtn.disabled = true;
+                    generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+
+                    const response = await fetch('@Url.Action("GenerateInviteLink", "ProjectManagement")', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Populate the input and show the container
+                        inviteUrlInput.value = data.url;
+                        linkContainer.classList.remove('d-none');
+                        generateBtn.innerHTML = 'Regenerate Link'; // Change text for subsequent uses
+                    } else {
+                        alert("Error generating link.");
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("An error occurred while generating the link.");
+                } finally {
+                    generateBtn.disabled = false;
+                }
+            });
+
+            // 2. Copy to Clipboard
+            copyLinkBtn.addEventListener('click', function () {
+                // Use the Clipboard API
+                navigator.clipboard.writeText(inviteUrlInput.value).then(() => {
+                    // Change icon to a checkmark temporarily
+                    copyLinkBtn.innerHTML = '<i class="bi bi-check2"></i>';
+                    copyLinkBtn.classList.replace('btn-outline-secondary', 'btn-success');
+                    copySuccessMsg.classList.remove('d-none');
+
+                    // Revert back after 2 seconds
+                    setTimeout(() => {
+                        copyLinkBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
+                        copyLinkBtn.classList.replace('btn-success', 'btn-outline-secondary');
+                        copySuccessMsg.classList.add('d-none');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            });
+
+        // --- DRAG & DROP LOGIC FOR WORKFLOW STATUSES ---
+
+        const sortableContainer = document.getElementById('sortable-statuses');
             
-            const tr = document.createElement('tr');
-            tr.className = 'custom-row';
-            tr.innerHTML = `
-                <td class="status-name-cell">
-                    ${nameValue}
-                    <input type="hidden" class="status-hidden-name" value="${nameValue}" />
-                </td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="removeStatus(this)">Remover</button>
-                </td>
-            `;
-            
-            // LÓGICA MUDADA AQUI:
-            // Pegamos todas as linhas atuais e encontramos a última (que é o 'Close')
-            const rows = tbody.querySelectorAll('tr');
-            const lastRow = rows[rows.length - 1];
-            
-            // Insere a nova linha ANTES da última linha ('Closed')
-            tbody.insertBefore(tr, lastRow);
+        if (sortableContainer) {
+            new Sortable(sortableContainer, {
+                animation: 150, // Smooth dragging animation
+                handle: '.bi-grip-vertical', // Only drag when clicking the grip icon
+                ghostClass: 'bg-light', // Class applied to the placeholder while dragging
+                    
+                // Triggered when the user drops the item in a new position
+                onEnd: function (evt) {
+                    // Gather the new order of IDs
+                    let newOrder = [];
+                    sortableContainer.querySelectorAll('.list-group-item').forEach((item, index) => {
+                        newOrder.push({
+                            Id: item.getAttribute('data-status-id'),
+                            OrderIndex: index
+                        });
+                    });
 
-            nameInput.value = '';
-
-            const modalElement = document.getElementById('statusModal');
-            const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-            modalInstance.hide();
-
-            reindexStatuses();
-        }
-
-        function removeStatus(button) {
-            const row = button.closest('tr');
-            row.remove();
-            reindexStatuses();
-        }
-
-        function reindexStatuses() {
-            const rows = document.querySelectorAll('#statusTable tbody tr');
-            
-            // Isso vai reindexar o Open como [0], os do meio como [1, 2, ...] e o Close como [último]
-            rows.forEach((row, index) => {
-                const hiddenInput = row.querySelector('.status-hidden-name');
-                if (hiddenInput) {
-                    hiddenInput.setAttribute('name', `Statuses[${index}].Name`);
+                    // Send the new order to the MVC Controller via AJAX
+                    fetch('@Url.Action("UpdateStatusOrder", "ProjectManagement")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Include anti-forgery token if required by your setup
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                        },
+                        body: JSON.stringify(newOrder)
+                    }).then(response => {
+                        if(!response.ok) {
+                            alert("Failed to save the new workflow order.");
+                        }
+                    });
                 }
             });
         }
-        
-        document.getElementById('statusModal').addEventListener('shown.bs.modal', function () {
-            document.getElementById('newStatusName').focus();
         });
     </script>
 }

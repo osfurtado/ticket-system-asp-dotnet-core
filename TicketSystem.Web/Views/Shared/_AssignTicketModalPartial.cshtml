@@ -1,0 +1,22 @@
+﻿@using TicketSystem.Web.Models.Ticket.ViewModels
+@{
+}
+@model TicketAssignViewModel
+
+<form asp-controller="Ticket" asp-action="Assign" asp-route-id="@Model.Id" method="post" class="ajax-modal-form">
+    <div class="modal-header">
+        <h6 class="modal-title">Assign Ticket # @Model.Id</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <div class="mb-3">
+            <label asp-for="AssigneeId" class="form-label"></label>
+            <select asp-for="AssigneeId" asp-items="Model.UsersList" class="form-select">
+                <option value="">-- Select Assignee --</option>
+            </select>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+    </div>
+</form>

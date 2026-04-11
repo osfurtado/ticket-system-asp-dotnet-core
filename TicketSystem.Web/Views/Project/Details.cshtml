@@ -10,7 +10,6 @@
     </div>
     <div class="d-flex justify-content-between my-3">
         <div>
-            <span class="text-muted">Workflow: @Model.WorkflowName</span>
             @if (Model.EndDate.HasValue)
             {
                 <span class="text-muted">Ended at: @Model.EndDate</span>
@@ -25,14 +24,14 @@
                         Finish Project
                     </button>
                 </form>
-
-                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createTicketModal">
-                    + New Ticket
+                <button type="button" class="btn btn-success" onclick="openCreateModal()">
+                    <i class="bi bi-plus-lg"></i> New Ticket
                 </button>
             </div>
         }
     </div>
-    
+   
+    <!-- KANBAN BOARD -->
     <div class="row flex-nowrap overflow-auto pb-4" style="min-height: 60vh;">
         @foreach (var status in Model.WorkflowStatuses)
         {
@@ -52,10 +51,7 @@
                     <div class="d-flex flex-column gap-2 flex-grow-1 dropzone">
                         @foreach (var ticket in Model.Tickets.Where(t => t.CurrentStatus == status))
                         {
-                          
                             bool canDrag = !Model.EndDate.HasValue && !ticket.IsClosed;
-                            
-
                             <div class="card shadow-sm border-start border-1 @(ticket.IsBlocked ? "border-danger" : "border-primary") kanban-card @(canDrag ? "" : "opacity-75")"
                                  draggable="@(canDrag ? "true" : "false")"
                                  ondragstart="@(canDrag ? "drag(event)" : "return false;")"
@@ -74,7 +70,6 @@
                                                 @(string.IsNullOrEmpty(ticket.AssigneeName) ? "?" : ticket.AssigneeName.Substring(0, 1).ToUpper())
                                             </div>
                                         </div>
-            
                                         <div class="btn-group">
                                             <a asp-controller="Ticket"
                                                    asp-action="Details"
@@ -101,67 +96,21 @@
             </div>
         }
     </div>
+    
+   @* -- Create Ticket Modal -- *@
     <div class="modal fade" id="createTicketModal" tabindex="-1" aria-labelledby="createTicketModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createTicketModalLabel">Create new ticket</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-            
-                <form asp-controller="PropostaTicket" asp-action="Create" method="post">
-                    <div class="modal-body">
-                        <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
-
-                        <div class="mb-3">
-                            <label for="Title" class="form-label fw-bold">Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Title" name="Title" required placeholder="Eg: Error to log in" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="Description" class="form-label fw-bold">Description<span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="Description" name="Description" rows="5" required placeholder="Describe the problem or task..."></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="AssigneeId" class="form-label fw-bold">Assign to</label>
-                            <select class="form-select" id="AssigneeId" name="AssigneeId" asp-items="Model.UsersList">
-                                <option value="">Not Assigned (leave open)</option>
-                            </select>
-                        </div>
-                    </div>
-                
-                    <div class="modal-footer bg-light-subtle">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
-                    </div>
-                </form>
+            <div class="modal-content" id="createModalContent">
+                <!-- Create Ticket Partial View -->
             </div>
         </div>
     </div>
-    <div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+    
+   @* -- Assign Ticket Modal -- *@
+    <div class="modal fade" id="assignTicketModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h6 class="modal-title">Assign Ticket Ticket #<span id="displayTicketId"></span></h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form asp-controller="PropostaTicket" asp-action="Assign" method="post">
-                    <div class="modal-body">
-                        <input type="hidden" name="TicketId" id="assignTicketId" />
-                        <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
-                    
-                        <div class="mb-3">
-                            <label class="form-label">Select Assignee</label>
-                            <select name="AssigneeId" class="form-select" asp-items="Model.UsersList" required>
-                                <option value="">-- Select --</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
-                    </div>
-                </form>
+            <div class="modal-content" id="assignModalContent">
+                <!-- Partial View -->
             </div>
         </div>
     </div>
@@ -169,20 +118,68 @@
 @Html.AntiForgeryToken()
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
-        // Função para permitir que a coluna receba o item solto
+        // -- CREATE TICKET MODAL SCRIPT --
+        function openCreateModal() {
+            $.get('@Url.Action("CreatePartial", "Ticket")', function (data) {
+                $('#createModalContent').html(data);
+                $('#createTicketModal').modal('show');
+                
+                // Re-bind ASP.NET client-side validation for the injected form
+                $.validator.unobtrusive.parse('#createModalContent form');
+            });
+        }
+
+        // -- ASSIGN MODAL SCRIPT --
+        function openAssignModal(ticketId) {
+            $.get('@Url.Action("AssignPartial", "Ticket")/' + ticketId, function (data) {
+                $('#assignModalContent').html(data);
+                $('#assignTicketModal').modal('show');
+                
+                $.validator.unobtrusive.parse('#assignModalContent form');
+            });
+        }
+
+        // Event delegation because the forms are injected dynamically
+        $(document).on('submit', '.ajax-modal-form', function (e) {
+            e.preventDefault(); // Stop standard full-page submission
+            
+            var form = $(this);
+            var modalContentId = form.closest('.modal-content').attr('id');
+
+            $.ajax({
+                url: form.attr('action'),
+                type: form.attr('method'),
+                data: form.serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        // Success: Close modal and refresh the page to show new data
+                        // (This keeps your current URL filters intact!)
+                        location.reload();
+                    } else {
+                        // Validation Failed: The controller returned the Partial View HTML with error messages.
+                        // We replace the modal content with this new HTML.
+                        $('#' + modalContentId).html(response);
+                        $.validator.unobtrusive.parse('#' + modalContentId + ' form');
+                    }
+                },
+                error: function () {
+                    alert("An error occurred while saving. Please try again.");
+                }
+            });
+        });
+
+
+        // -- KANBAN SCRIPT --
         function allowDrop(ev) {
             ev.preventDefault();
         }
 
-        // Variável global para guardar de onde o card saiu
         let originalParent = null;
 
-        // Função chamada quando o usuário começa a arrastar o card
         function drag(ev) {
-            // Guarda o ID do card HTML que está sendo arrastado
             ev.dataTransfer.setData("cardId", ev.currentTarget.id);
-            // Guarda o pai (dropzone) atual do card antes de começar a arrastar
             originalParent = ev.currentTarget.parentNode;
         }
 
@@ -190,16 +187,6 @@
             ev.preventDefault();
         }
 
-        // Função para abrir o modal de atribuição e passar o ID do Ticket
-        function openAssignModal(ticketId) {
-            document.getElementById('assignTicketId').value = ticketId;
-            document.getElementById('displayTicketId').innerText = ticketId;
-        
-            var assignModal = new bootstrap.Modal(document.getElementById('assignModal'));
-            assignModal.show();
-        }
-
-        // Função chamada quando o card é solto na coluna
         function drop(ev, columnElement) {
             ev.preventDefault();
     
@@ -217,49 +204,49 @@
             var newStatus = columnElement.getAttribute('data-status');
             var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-        fetch('/PropostaTicket/UpdateStatus', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': token
-            },
-            body: JSON.stringify({ ticketId: parseInt(ticketId), newStatus: newStatus })
-        })
-        .then(response => {
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // === INÍCIO DA ATUALIZAÇÃO DOS CONTADORES ===
+            fetch('/Ticket/UpdateStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ TicketId: parseInt(ticketId), NewStatus: newStatus })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // === INÍCIO DA ATUALIZAÇÃO DOS CONTADORES ===
         
-                // 1. Encontra a coluna de origem e a coluna de destino
-                let sourceColumn = originalParent.closest('.kanban-column');
-                let targetColumn = columnElement;
+                    // 1. Encontra a coluna de origem e a coluna de destino
+                    let sourceColumn = originalParent.closest('.kanban-column');
+                    let targetColumn = columnElement;
 
-                // 2. Encontra os badges (contadores) dentro dessas colunas
-                let sourceBadge = sourceColumn.querySelector('.status-count');
-                let targetBadge = targetColumn.querySelector('.status-count');
+                    // 2. Encontra os badges (contadores) dentro dessas colunas
+                    let sourceBadge = sourceColumn.querySelector('.status-count');
+                    let targetBadge = targetColumn.querySelector('.status-count');
 
-                // 3. Atualiza os números (subtrai 1 da origem, soma 1 no destino)
-                if (sourceBadge && targetBadge) {
-                    sourceBadge.innerText = parseInt(sourceBadge.innerText) - 1;
-                    targetBadge.innerText = parseInt(targetBadge.innerText) + 1;
+                    // 3. Atualiza os números (subtrai 1 da origem, soma 1 no destino)
+                    if (sourceBadge && targetBadge) {
+                        sourceBadge.innerText = parseInt(sourceBadge.innerText) - 1;
+                        targetBadge.innerText = parseInt(targetBadge.innerText) + 1;
+                    }
+        
+                    // === FIM DA ATUALIZAÇÃO DOS CONTADORES ===
+                } else {
+                    alert(data.message);
+                    // Falhou na regra de negócio (ex: não tem Assignee), reverte o card
+                    originalParent.appendChild(cardElement);
                 }
-        
-                // === FIM DA ATUALIZAÇÃO DOS CONTADORES ===
-            } else {
-                alert(data.message);
-                // Falhou na regra de negócio (ex: não tem Assignee), reverte o card
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Errr while updating status!");
+                // Deu erro de servidor, reverte o card
                 originalParent.appendChild(cardElement);
-            }
-        })
-        .catch(error => {
-            console.error('Erro detalhado:', error);
-            alert("Ocorreu um erro ao atualizar o status. Verifique a consola do navegador.");
-            // Deu erro de servidor, reverte o card
-            originalParent.appendChild(cardElement);
-        });
+            });
         }
     </script>
 }
