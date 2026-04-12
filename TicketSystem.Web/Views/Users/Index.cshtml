@@ -13,66 +13,83 @@
 </div>
 
 <!-- Users Table -->
-<table class="table table-striped table-hover align-middle">
-    <thead class="table-secondary">
-        <tr>
-            <th>Name</th>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Users)
-        {
+<table class="table table-hover align-middle shadow-sm">
+        <thead class="table-secondary">
             <tr>
-                <td>@item.Name</td>
-                <td>@item.Username</td>
-                <td>
-                    <span class="badge bg-secondary">@item.RoleName</span>
-                </td>
-                <td>
-                    <span class="badge @(item.IsActive ? "bg-success" : "bg-danger")">
-                        @(item.IsActive ? "Active" : "Inactive")
-                    </span>
-                </td>
-                <td>
-                    <div class="d-flex gap-2">
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
-                            Edit
-                        </a>
-                        @if (item.Id == ViewBag.CurrentUserId)
-                        {
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    disabled title="You cannot deactivate yourself">
-                                You
-                            </button>
-                        }
-                        else
-                        {
-                            <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post" class="m-0 p-0" id="form-@item.Id">
-                                @Html.AntiForgeryToken()
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           role="switch"
-                                           id="switch-@item.Id"
-                                    @(item.IsActive ? "checked" : "")
-                                           onchange="document.getElementById('form-@item.Id').submit();"
-                                           style="cursor: pointer;">
-                                    <label class="form-check-label" for="switch-@item.Id">
-                                        @(item.IsActive ? "Deactivate" : "Activate")
-                                    </label>
-                                </div>
-                            </form>
-                        }
-                    </div>
-                </td>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th style="width: 80px;"></th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Users)
+            {
+                <tr>
+                    <td class="d-flex align-items-center p-2">
+                        <div class="avatar-circle me-3">
+                            @item.Initials
+                        </div>
+                        <div class="text-truncate d-flex align-items-center">
+                            @item.Name
+                        </div>
+                    </td>
+                    <td>@item.Username</td>
+                    <td>
+                        <span class="badge bg-secondary">@item.RoleName</span>
+                    </td>
+                    <td>
+                        <span class="badge @(item.IsActive ? "bg-success" : "bg-danger")">
+                            @(item.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="text-sm text-secondary" title="View Details">
+                                <i class="bi bi-eye-fill fs-5"></i>
+                            </a>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-link text-secondary text-decoration-none p-0"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-popper-config='{"strategy":"fixed"}'
+                                        aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical fs-5"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                    <li>
+                                        <a class="dropdown-item text-sm-start" asp-action="Edit" asp-route-id="@item.Id">
+                                            <i class="bi bi-pencil-square me-2 text-primary"></i> Edit
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                    @if (item.Id != ViewBag.CurrentUserId)
+                                    {
+                                        <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post">
+                                            <input type="hidden" name="IsActive" value="@(item.IsActive ? false : true)" />
+                                            <button type="submit" class="dropdown-item btn-sm text-sm">
+                                                @(item.IsActive ? "Deactivate" : "Activate")
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button disabled class="dropdown-item btn-sm text-sm">
+                                            You
+                                        </button>
+                                    }
+                                </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
 
 <!-- Create User Modal -->
 <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">

@@ -26,53 +26,52 @@
     <div class="tab-content mt-3" id="myTabContent">
         <!-- HOME TAB -->
         <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="d-flex gap-2 my-3">
-                        <div class="card text-center shadow-sm" style="width: 18rem;">
-                            <div class="card-body">
-                                <h2 class="display-4 fw-bold mb-0">@Model.TotalTickets</h2>
-                                <p class="text-muted text-uppercase small">Tickets</p>
-                            </div>
-                        </div>
-                        <div class="card text-center shadow-sm" style="width: 18rem;">
-                            <div class="card-body">
-                                <h2 class="display-4 fw-bold mb-0">@Model.ExistingMembers.Count()</h2>
-                                <p class="text-muted text-uppercase small">Members</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card mb-3 shadow-sm">
-                        <div class="card-header bg-light-subtle">
-                            <h5 class="mb-0">Description</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text mt-3" style="white-space: pre-wrap;">@Model.Description</p>
-                        </div>
+            <div class="d-flex justify-content-end gap-2">
+                <a class="btn btn-primary" asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjectId">Board</a>
+                <a class="btn btn-success">Edit</a>
+            </div>
+            <div class="d-flex gap-2 my-3">
+                <div class="card text-center shadow-sm" style="width: 18rem;">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold mb-0">@Model.ExistingMembers.Count()</h2>
+                        <p class="text-muted text-uppercase small">Members</p>
                     </div>
                 </div>
-                <div class="col-lg-4 mt-4 mt-lg-0">
-                    <div class="card mb-4 shadow-sm">
-                        <div class="card-header bg-light-subtle">
-                            <h5 class="mb-0">Details</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled mb-0">
-                                <li class="mb-2">
-                                    <span class="text-muted d-block small">Created By</span>
-                                    <span>@Model.CreatedByName</span>
-                                </li>
-                                <li>
-                                    <span class="text-muted d-block small">Start</span>
-                                    <span>@Model.StartDate.ToString("dd/MM/yyyy")</span>
-                                </li>
-                                <li>
-                                    <span class="text-muted d-block small">End</span>
-                                    <span>@Model.EndDate?.ToString("dd/MM/yyyy")</span>
-                                </li>
-                            </ul>
-                        </div>
+                <div class="card text-center shadow-sm" style="width: 18rem;">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold mb-0">@Model.TotalTickets</h2>
+                        <p class="text-muted text-uppercase small">Tickets Total</p>
                     </div>
+                </div>
+                <div class="card text-center shadow-sm" style="width: 18rem;">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold mb-0">@Model.TotalTickets</h2>
+                        <p class="text-muted text-uppercase small">Tickets Closed</p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Details</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <span class="text-muted d-block small">Created By</span>
+                            <span>@Model.CreatedByName</span>
+                        </li>
+                        <li>
+                            <span class="text-muted d-block small">Start</span>
+                            <span>@Model.StartDate.ToString("dd/MM/yyyy")</span>
+                        </li>
+                        <li>
+                            <span class="text-muted d-block small">End</span>
+                            <span>@Model.EndDate?.ToString("dd/MM/yyyy")</span>
+                        </li>
+                    </ul>
+                    <hr />
+                    <p class="card-text mt-3" style="white-space: pre-wrap;">@Model.Description</p>
                 </div>
             </div>
         </div>

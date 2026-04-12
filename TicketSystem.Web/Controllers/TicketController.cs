@@ -618,7 +618,7 @@ namespace TicketSystem.Web.Controllers
                 query = model.SearchStatus switch
                 {
                     "Open" => query.Where(t => t.CurrentStatus == "Open"),
-                    "Close" => query.Where(t => t.CurrentStatus == "Close"),
+                    "Closed" => query.Where(t => t.CurrentStatus == "Closed"),
                     _ => query.Where(t => t.CurrentStatus != "Open" && t.CurrentStatus != "Close")
                 };
             }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using TicketSystem.Web.Models;
 using TicketSystem.Web.Models.Account;
 using TicketSystem.Web.Models.Users;
 
@@ -228,6 +229,7 @@ namespace TicketSystem.Web.Controllers
                 {
                     Id = user.Id,
                     Name = user.Name,
+                    Initials = AvatarHelper.GetInitials(user.Name ?? "Default"),
                     Username = user.UserName ?? "Unknown",
                     RoleName = roles.FirstOrDefault() ?? "Without role",
                     IsActive = user.IsActive

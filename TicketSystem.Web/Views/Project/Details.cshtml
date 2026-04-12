@@ -8,7 +8,7 @@
             @Model.ProjectTitle
         </h2>
     </div>
-    <div class="d-flex justify-content-between my-3">
+    <div class="d-flex justify-content-between mt-2 mb-4">
         <div>
             @if (Model.EndDate.HasValue)
             {
@@ -18,13 +18,15 @@
         @if (!Model.EndDate.HasValue)
         {
             <div class="d-flex gap-2">
-                <form asp-controller="Project" asp-action="Close" asp-route-id="@Model.ProjectId" method="post"
+                <a class="btn btn-primary btn-sm" asp-controller="ProjectManagement" asp-action="Details" asp-route-id="@Model.ProjectId"><i class="bi bi-gear"></i> Manage</a>
+                   @* TODO: MOVE TO PROJECT MANAGEMENT *@
+@*                 <form asp-controller="Project" asp-action="Close" asp-route-id="@Model.ProjectId" method="post"
                       onsubmit="return confirm('Would you like to finish this Project? It will not be possible to add new tickets.');">
                     <button type="submit" class="btn btn-outline-danger">
                         Finish Project
                     </button>
-                </form>
-                <button type="button" class="btn btn-success" onclick="openCreateModal()">
+                </form> *@
+                <button type="button" class="btn btn-success btn-sm" onclick="openCreateModal()">
                     <i class="bi bi-plus-lg"></i> New Ticket
                 </button>
             </div>

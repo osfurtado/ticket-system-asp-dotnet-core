@@ -69,7 +69,7 @@ else
         <form asp-controller="Ticket" asp-action="AddDependency" method="post" id="formAddDependency">
             <input type="hidden" asp-for="BlockedTicketId" />
 
-            <div class="row gx-3 align-items-start">
+            <div class="row gx-3 align-items-start text-sm">
                 <div class="col-md-9">
                     <select asp-for="BlockingTicketId" asp-items="Model.AvailableTickets" class="form-select searchable-select" required>
                         <option value="">Search for Ticket Id or Title...</option>
@@ -78,7 +78,7 @@ else
                 </div>
 
                 <div class="col-md-3 mt-3 mt-md-0 d-flex align-items-end">
-                    <button type="submit" class="btn btn-success w-100" id="btnSubmitDependency">
+                    <button type="submit" class="btn btn-success btn-sm w-100" id="btnSubmitDependency">
                         Add
                     </button>
                 </div>

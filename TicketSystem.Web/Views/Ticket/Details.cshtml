@@ -28,22 +28,20 @@
         <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="d-flex justify-content-end align-items-center my-3">
-                        <div class="d-flex gap-2">
-                            <a asp-action="Index" class="text-secondary"><i class="bi bi-pencil-fill"></i></a>
-                            @if (Model.CurrentStatus == "Open")
-                            {
-                                <span class="badge bg-primary">@Model.CurrentStatus</span>
-                            }
-                            else if (Model.CurrentStatus == "Close")
-                            {
-                                <span class="badge bg-success">@Model.CurrentStatus</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-warning">@Model.CurrentStatus</span>
-                            }
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center my-3">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">Edit</a>   
+                        @if (Model.CurrentStatus == "Open")
+                        {
+                            <span class="badge bg-primary">@Model.CurrentStatus</span>
+                        }
+                        else if (Model.CurrentStatus == "Closed")
+                        {
+                            <span class="badge bg-success">@Model.CurrentStatus</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">@Model.CurrentStatus</span>
+                        }
                     </div>
 
                     <div class="card mb-4 shadow-sm">
@@ -91,8 +89,8 @@
                                     <textarea name="Content" class="form-control" rows="3" placeholder="Write your Commment here..." required></textarea>
                                 </div>
                                 <div class="text-end">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-chat-text"></i> Comment
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="bi bi-chat-text"></i> Save
                                     </button>
                                 </div>
                             </form>
@@ -123,9 +121,6 @@
                                 <li class="mb-2">
                                     <span class="text-muted d-block small">Assignee</span>
                                     <span>@(Model.AssigneeName ?? "Not assigned")</span>
-                                    <a asp-action="Index" class="text-secondary">
-                                        <i class="bi bi-pencil-fill"></i>
-                                    </a>
                                 </li>
                                 <li>
                                     <span class="text-muted d-block small">Created at</span>

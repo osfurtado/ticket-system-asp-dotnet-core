@@ -486,7 +486,7 @@ namespace TicketSystem.Web.Controllers
                 Title = p.Title,
                 StartDate = p.StartDate,
                 EndDate =  p.EndDate,
-                CreatedBy = p.CreatedBy!.UserName ?? "Unknown"
+                CreatedBy = p.CreatedBy!.Name ?? "Unknown"
             }).ToListAsync();
 
             return new PMCreateEditViewModel
