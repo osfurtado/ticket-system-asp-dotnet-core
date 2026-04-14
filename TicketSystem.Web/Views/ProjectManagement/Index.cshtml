@@ -14,6 +14,7 @@
         <tr>
             <th>Title</th>
             <th>Created By</th>
+            <th>Members</th>
             <th>Start Date</th>
             <th>End Date</th>
             <th style="width: 80px;"></th>
@@ -24,6 +25,7 @@
             <tr>
                 <td>@item.Title</td>
                 <td>@item.CreatedBy</td>
+                <td>@item.TotalMembers</td>
                 <td>@item.StartDate</td>
                 <td>@item.EndDate</td>
                 <td class="text-center">
@@ -41,16 +43,22 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow">
                                     <li>
-                                    <a class="dropdown-item text-sm-start" asp-action="Edit" asp-route-id="@item.Id">
+                                        <a class="dropdown-item text-sm-start" asp-action="Edit" asp-route-id="@item.Id">
                                             <i class="bi bi-pencil-square me-2 text-primary"></i> Edit
                                         </a>
                                     </li>
+                                    @if (item.CanDelete)
+                                    {
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <a class="dropdown-item text-danger text-sm-start" asp-action="Delete" asp-route-id="@item.Id">
-                                            <i class="bi bi-trash me-2"></i> Delete
-                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@item.Id" method="post"
+                                              onsubmit="return confirm('Are you sure that you want to Delete this Project?');">
+                                            <button type="submit" class="dropdown-item text-danger text-sm-start" title="Delete Project">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
                                     </li>
+                                    }
                                 </ul>
                             </div>
                         </div>

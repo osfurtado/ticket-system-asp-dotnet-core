@@ -31,7 +31,10 @@ namespace TicketSystem.Web.Controllers
             var isAdmin = User.IsInRole("Admin");
 
             // Build the Query
-            var query = _context.Tickets.AsNoTracking().AsQueryable();
+            var query = _context.Tickets
+                                .AsNoTracking()
+                                .Where(t => !t.Project!.IsDeleted)
+                                .AsQueryable();
 
             // Apply Filters
             query = ApplyFilters(query, model);
@@ -47,8 +50,15 @@ namespace TicketSystem.Web.Controllers
                     CreatedAt = DateOnly.FromDateTime(t.CreatedAt),
                     Assignee = t.Assignee != null ? t.Assignee.UserName! : "Not Assigned",
                     CurrentStatus = t.CurrentStatus,
-                    // Logic handled at the DB level
-                    CanChange = isAdmin || currentUserId == t.CreatorId || currentUserId == t.AssigneeId
+                    CanChange = (isAdmin ||
+                         t.CreatorId == currentUserId ||
+                         t.AssigneeId == currentUserId ||
+                         t.Project.Members.Any(m => m.MemberId == currentUserId && m.RoleInProject == "Manager"))
+                         &&
+                         t.CurrentStatus != "Closed"
+                         &&
+                         t.Project.EndDate == null,
+                    CanChangeStatus = !t.BlockedByTickets.Any(td => td.BlockingTicket!.CurrentStatus != "Closed") && t.AssigneeId != null
                 })
                 .ToListAsync();
 
@@ -63,26 +73,32 @@ namespace TicketSystem.Web.Controllers
         // GET: Ticket/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
 
             var ticketModel = await _context.Tickets
                 .Include(t => t.Assignee)
                 .Include(t => t.ClosedBy)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.Project)
+                    .ThenInclude(p => p.Members)
                 .Include(t => t.Comments)
                     .ThenInclude(c => c.Creator)
                 .Include(t => t.Attachments)
                 .ThenInclude(a => a.UploadedBy)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            
-            if (ticketModel == null)
-            {
-                return NotFound();
-            }
+
+            if (ticketModel == null || ticketModel.Project!.IsDeleted) return NotFound();
+
+            // Business Rules for Permissions
+            bool isProjectActive = ticketModel.Project!.EndDate == null;
+            bool isNotClosed = ticketModel.CurrentStatus != "Closed";
+            bool hasRole = isAdmin || ticketModel.CreatorId == currentUserId || ticketModel.AssigneeId == currentUserId ||
+                   ticketModel.Project.Members.Any(m => m.MemberId == currentUserId && m.RoleInProject == "Manager");
+
+            bool canEditBase = isProjectActive && isNotClosed && hasRole;
 
             var viewModel = new TicketDetailsViewModel
             {
@@ -94,7 +110,8 @@ namespace TicketSystem.Web.Controllers
                 CreatorName = ticketModel.CreatedBy != null ? ticketModel.CreatedBy.UserName! : "Unknown",
                 AssigneeName = ticketModel.Assignee?.UserName,
                 CreatedAt = ticketModel.CreatedAt,
-
+                CanEdit = canEditBase,
+                CanManageDependencies = canEditBase,
                 Comments = ticketModel.Comments
                             .OrderByDescending(c => c.CreatedAt)
                             .Select(c => new CommentViewModel
@@ -272,24 +289,58 @@ namespace TicketSystem.Web.Controllers
             return Json(new { success = true });
         }
 
-        // CREATE PARTIAL: Fetches the Create Form to put inside the Modal
-        public async Task<IActionResult> CreatePartial()
+        // GET CREATE TICKET: Fetches the Create Form to put inside the Modal
+        public async Task<IActionResult> CreatePartial(int? projectId = null)
         {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            var projectQuery = _context.Projects
+                                    .Where(p => !p.IsDeleted && p.EndDate == null);
+
+            if (!isAdmin)
+            {
+                projectQuery = projectQuery.Where(p => p.Members.Any(m => m.MemberId == currentUserId));
+            }
+
 
             var model = new TicketCreateViewModel
             {
                 // Populate dropdowns for the modal
-                Projects = await _context.Projects
+                Projects = await projectQuery
                     .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.Title })
                     .ToListAsync(),
 
-                UsersList = await _context.Users
-                    .Select(u => new SelectListItem { Value = u.Id, Text = u.UserName })
-                    .ToListAsync()
+                ProjectId = projectId ?? 0,
+                // To be Populated by Ajax
+                UsersList = new List<SelectListItem>()
             };
+
+            if (projectId.HasValue)
+            {
+                model.UsersList = await _context.ProjectMembers
+                    .Where(pm => pm.ProjectId == projectId.Value)
+                    .Select(pm => new SelectListItem { Value = pm.MemberId, Text = pm.Member!.UserName })
+                    .ToListAsync();
+            }
 
             return PartialView("_CreateTicketModalPartial", model);
         }
+
+        // Endpoint to be called by Ajax to populate the projects:
+        [HttpGet]
+        public async Task<IActionResult> GetProjectMembers(int projectId)
+        {
+            var members = await _context.ProjectMembers
+                .Where(pm => pm.ProjectId == projectId)
+                .Select(pm => new { value = pm.MemberId, text = pm.Member!.UserName })
+                .ToListAsync();
+
+            return Json(members);
+        }
+
+
+
 
         // GET: Ticket/Edit/5 : TODO : Not Used
         public async Task<IActionResult> Edit(int? id)
@@ -323,7 +374,21 @@ namespace TicketSystem.Web.Controllers
 
             if (!ModelState.IsValid)
             {
-                await PopulateEditDropdownsAsync(viewModel);
+                bool isBlocked = await _context.TicketDependencies
+                         .AnyAsync(td => td.BlockedTicketId == id && td.BlockingTicket!.CurrentStatus != "Closed") || viewModel.AssigneeId == null;
+                
+                viewModel.CanChangeStatus = !isBlocked;
+
+                var ticket = await _context.Tickets.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
+
+                if (ticket != null)
+                {
+                    viewModel.UsersList = await _context.ProjectMembers
+                                                        .Where(pm => pm.ProjectId == ticket.ProjectId)
+                                                        .Select(pm => new SelectListItem { Value = pm.MemberId, Text = pm.Member!.UserName })
+                                                        .ToListAsync();
+                    await PopulateEditDropdownsAsync(viewModel);
+                }
                 return PartialView("_EditTicketModalPartial", viewModel);
             }
 
@@ -376,22 +441,47 @@ namespace TicketSystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> EditPartial(int id)
         {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            var t = await _context.Tickets
+                            .Include(t => t.Project)
+                                .ThenInclude(p => p.Members)
+                            .Include(t => t.BlockedByTickets) 
+                            .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (t == null) return NotFound();
+
+            // Edit Business Rules
+            bool isProjectActive = t.Project!.EndDate == null;
+            bool isNotClosed = t.CurrentStatus != "Closed";
+            bool hasRole = isAdmin || t.CreatorId == currentUserId || t.AssigneeId == currentUserId ||
+                   t.Project.Members.Any(m => m.MemberId == currentUserId && m.RoleInProject == "Manager");
+
+            bool canEdit = isProjectActive && isNotClosed && hasRole;
+
+            if (!canEdit)
+            {
+                return Forbid(); 
+            }
+
+            // Status Change Rule
+            bool isBlocked = await _context.TicketDependencies
+                                     .AnyAsync(td => td.BlockedTicketId == id && td.BlockingTicket!.CurrentStatus != "Closed") || t.AssigneeId == null;
+
             // Get TicketData
-            var ticketData = await _context.Tickets
-                                .Where(t => t.Id == id)
-                                .Select(t => new TicketEditViewModel
+            var ticketData = new TicketEditViewModel
                                 {
                                     Id = t.Id,
                                     Title = t.Title,
                                     Description = t.Description,
                                     CurrentStatus = t.CurrentStatus,
                                     AssigneeId = t.AssigneeId,
-                                    WorkflowId = t.Project!.WorkflowId
-                                })
-                                .FirstOrDefaultAsync();
+                                    WorkflowId = t.Project!.WorkflowId,
+                                    ProjectId = t.ProjectId,
+                                    CanChangeStatus = !isBlocked
+            };
 
-            if(ticketData ==null) return NotFound();
-            if(ticketData.WorkflowId == 0) return NotFound("Workflow not found");
 
             // List of Workflow Statuses and Users for Dropdowns
             await PopulateEditDropdownsAsync(ticketData);
@@ -402,8 +492,15 @@ namespace TicketSystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> AddDependencyPartial(int ticketId)
         {
-            var ticket = await _context.Set<TicketModel>().FindAsync(ticketId);
+            var ticket = await _context.Tickets
+                                        .Include(t => t.Project)
+                                            .ThenInclude(p => p.Members)
+                                        .FirstOrDefaultAsync(t => t.Id == ticketId);
+
             if (ticket == null) return NotFound();
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
 
             var ticketsBlockingMe = await _context.Set<TicketDependency>()
                                                 .Where(td => td.BlockedTicketId == ticketId)
@@ -425,6 +522,8 @@ namespace TicketSystem.Web.Controllers
 
             var availableTicketsList = new List<SelectListItem>();
 
+
+
             foreach (var candidate in candidateTickets)
             {
                 if (!await CheckCircularDependency(ticketId, candidate.Id))
@@ -437,12 +536,18 @@ namespace TicketSystem.Web.Controllers
                 }
             }
 
+            bool isProjectActive = ticket.Project!.EndDate == null;
+            bool isNotClosed = ticket.CurrentStatus != "Closed";
+            bool hasRole = isAdmin || ticket.CreatorId == currentUserId || ticket.AssigneeId == currentUserId ||
+                   ticket.Project.Members.Any(m => m.MemberId == currentUserId && m.RoleInProject == "Manager");
+
             var model = new TicketAddDependencyViewModel
             {
                 BlockedTicketId = ticketId,
                 AvailableTickets = availableTicketsList,
                 TicketsBlockingMe = ticketsBlockingMe!,
-                TicketsIBlock = ticketsIBlock!
+                TicketsIBlock = ticketsIBlock!,
+                CanManageDependencies = isProjectActive && isNotClosed && hasRole
             };
 
             return PartialView("_AddDependencyTicketPartial", model);
@@ -540,6 +645,35 @@ namespace TicketSystem.Web.Controllers
 
             return Json(new { success = true, message = "Status updated successfully" });
         }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CloseTicket(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var ticket = await _context.Tickets
+                .Include(t => t.BlockedByTickets)
+                    .ThenInclude(td => td.BlockingTicket)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (ticket == null) return NotFound();
+
+             bool isBlocked = ticket.BlockedByTickets.Any(td => td.BlockingTicket!.CurrentStatus != "Closed") || ticket.AssigneeId == null;
+
+            if (!isBlocked && ticket.CurrentStatus != "Closed")
+            {
+                ticket.CurrentStatus = "Closed";
+                ticket.ClosedById = currentUserId;
+                ticket.ClosedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
 
 
         [HttpPost]
@@ -652,10 +786,11 @@ namespace TicketSystem.Web.Controllers
                                 .Where(ws => ws.WorkflowId == model.WorkflowId)
                                 .Select(ws => new SelectListItem { Value = ws.Name, Text = ws.Name }).ToListAsync();
 
-            var usersList = await _context.Users
-                                .Select(u => new SelectListItem { Value = u.Id, Text = u.UserName })
-                                .ToListAsync();
 
+            var usersList = await _context.ProjectMembers
+                .Where(pm => pm.ProjectId == model.ProjectId)
+                .Select(pm => new SelectListItem { Value = pm.MemberId, Text = pm.Member!.UserName })
+                .ToListAsync();
 
             model.StatusList = statusList;
             model.UsersList = usersList;

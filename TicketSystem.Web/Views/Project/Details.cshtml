@@ -18,17 +18,22 @@
         @if (!Model.EndDate.HasValue)
         {
             <div class="d-flex gap-2">
-                <a class="btn btn-primary btn-sm" asp-controller="ProjectManagement" asp-action="Details" asp-route-id="@Model.ProjectId"><i class="bi bi-gear"></i> Manage</a>
+                @if (Model.CanManage)
+                {
+                    <a class="btn btn-primary btn-sm" asp-controller="ProjectManagement" asp-action="Details" asp-route-id="@Model.ProjectId"><i class="bi bi-gear"></i> Manage</a>
+                }
+                
                    @* TODO: MOVE TO PROJECT MANAGEMENT *@
-@*                 <form asp-controller="Project" asp-action="Close" asp-route-id="@Model.ProjectId" method="post"
+              @*<form asp-controller="Project" asp-action="Close" asp-route-id="@Model.ProjectId" method="post"
                       onsubmit="return confirm('Would you like to finish this Project? It will not be possible to add new tickets.');">
                     <button type="submit" class="btn btn-outline-danger">
                         Finish Project
                     </button>
                 </form> *@
+
                 @if (Model.CanCreateTicket)
                 {
-                    <button type="button" class="btn btn-success btn-sm" onclick="openCreateModal()">
+                    <button type="button" class="btn btn-success btn-sm" onclick="openCreateModal(@Model.ProjectId)">
                         <i class="bi bi-plus-lg"></i> New Ticket
                     </button>
                 }
@@ -87,8 +92,8 @@
                                             @if (ticket.CanAssign)
                                             {
                                                 <button type="button" class="btn btn-sm btn-outline-primary" title="Assign to"
-                                                        onclick="openAssignModal(@ticket.Id)">
-                                                    <i class="bi bi-person-plus"></i>
+                                                        onclick="openEditModal(@ticket.Id)">
+                                                    <i class="bi bi-pencil"></i>
                                                 </button>
                                             }
                                         </div>
@@ -110,6 +115,15 @@
             </div>
         </div>
     </div>
+
+    <!-- Ticket Edit Modal -->
+    <div class="modal fade" id="editTicketModal" tabindex="-1" aria-labelledby="editTicketModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" id="editModalContent">
+                <!-- Partial View: _EditTicketModalPartial -->
+            </div>
+        </div>
+    </div>
     
    @* -- Assign Ticket Modal -- *@
     <div class="modal fade" id="assignTicketModal" tabindex="-1" aria-hidden="true">
@@ -126,13 +140,30 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         // -- CREATE TICKET MODAL SCRIPT --
-        function openCreateModal() {
-            $.get('@Url.Action("CreatePartial", "Ticket")', function (data) {
+        function openCreateModal(projectId = null) {
+
+            var url = '@Url.Action("CreatePartial", "Ticket")';
+
+            if (projectId) {
+                url += '?projectId=' + projectId;
+            }
+
+            $.get(url, function (data) {
                 $('#createModalContent').html(data);
                 $('#createTicketModal').modal('show');
                 
                 // Re-bind ASP.NET client-side validation for the injected form
                 $.validator.unobtrusive.parse('#createModalContent form');
+            });
+        }
+
+         // -- CREATE TICKET MODAL SCRIPT --
+        function openEditModal(id) {
+            $.get('@Url.Action("EditPartial", "Ticket")/' + id, function (data) {
+                $('#editModalContent').html(data);
+                $('#editTicketModal').modal('show');
+                
+                $.validator.unobtrusive.parse('#editModalContent form');
             });
         }
 

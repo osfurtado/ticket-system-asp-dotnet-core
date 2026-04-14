@@ -31,7 +31,10 @@
             <div class="row">
                 <div class="col-lg-8">
                     <div class="d-flex justify-content-between align-items-center my-3">
-                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">Edit</a>   
+                        @if (Model.CanEdit)
+                        {
+                            <a class="btn btn-primary btn-sm" onclick="openEditModal(@Model.Id)">Edit</a>
+                        }
                         @if (Model.CurrentStatus == "Open")
                         {
                             <span class="badge bg-primary">@Model.CurrentStatus</span>
@@ -199,9 +202,65 @@
     </div>
 </div>
 
+<!-- Ticket Edit Modal -->
+<div class="modal fade" id="editTicketModal" tabindex="-1" aria-labelledby="editTicketModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" id="editModalContent">
+            <!-- Partial View: _EditTicketModalPartial -->
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+
+        // ---------------- HOME TAB ----------------------------------------------------
+
+        // ------ LOAD AND SHOW EDIT MODAL ---
+        function openEditModal(id) {
+            $.get('@Url.Action("EditPartial", "Ticket")/' + id, function (data) {
+                $('#editModalContent').html(data);
+                $('#editTicketModal').modal('show');
+                
+                $.validator.unobtrusive.parse('#editModalContent form');
+            });
+        }
+
+        // ---- HANDLE EDIT FORM SUBMISSION----------
+        $(document).on('submit', '.ajax-modal-form', function (e) {
+            e.preventDefault(); // Stop standard full-page submission
+            
+            var form = $(this);
+            var modalContentId = form.closest('.modal-content').attr('id');
+
+            $.ajax({
+                url: form.attr('action'),
+                type: form.attr('method'),
+                data: form.serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        // Success: Close modal and refresh the page to show new data
+                        // (This keeps your current URL filters intact!)
+                        location.reload();
+                    } else {
+                        // Validation Failed: The controller returned the Partial View HTML with error messages.
+                        // We replace the modal content with this new HTML.
+                        $('#' + modalContentId).html(response);
+                        $.validator.unobtrusive.parse('#' + modalContentId + ' form');
+                    }
+                },
+                error: function () {
+                    alert("An error occurred while saving. Please try again.");
+                }
+            });
+        });
+
+
+
+
+        // ---------------DEPENDENCIES TAB ------------------------------------------------
+
         let isDependenciesLoaded = false;
 
         function loadDependencies() {
@@ -243,5 +302,6 @@
                 `);
             });
         }
+
     </script>
 }

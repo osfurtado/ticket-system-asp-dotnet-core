@@ -135,9 +135,20 @@
                                         </li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <a class="dropdown-item text-danger text-sm-start" asp-action="Delete" asp-route-id="@item.Id">
-                                                <i class="bi bi-trash me-2"></i> Delete
-                                            </a>
+                                            @if (item.CanChangeStatus && item.CurrentStatus != "Closed")
+                                            {
+                                                <form asp-controller="Ticket" asp-action="CloseTicket" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                                    <button type="submit" class="dropdown-item text-success text-sm-start">
+                                                        <i class="bi bi-check2-circle me-2"></i> Close Ticket
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="dropdown-item text-muted disabled" title="Blocked, unassigned, or already closed.">
+                                                    <i class="bi bi-slash-circle me-2"></i> Cannot Close
+                                                </span>
+                                            }
                                         </li>
                                     </ul>
                                 </div>
@@ -171,8 +182,15 @@
 @section Scripts {
     <script>
         // --- 1. LOAD AND SHOW CREATE MODAL ---
-        function openCreateModal() {
-            $.get('@Url.Action("CreatePartial", "Ticket")', function (data) {
+        function openCreateModal(projectId = null) {
+
+            var url = '@Url.Action("CreatePartial", "Ticket")';
+
+            if (projectId) {
+                url += '?projectId=' + projectId;
+            }
+
+            $.get(url, function (data) {
                 $('#createModalContent').html(data);
                 $('#createTicketModal').modal('show');
                 
@@ -180,6 +198,34 @@
                 $.validator.unobtrusive.parse('#createModalContent form');
             });
         }
+
+        $(document).on('change', '#ProjectId', function () {
+            var projectId = $(this).val();
+            var assigneeSelect = $('#AssigneeId');
+
+            assigneeSelect.empty();
+            assigneeSelect.append('<option value="">-- Unassigned --</option>');
+
+            if (projectId) {
+                var url = '@Url.Action("GetProjectMembers", "Ticket")' + '?projectId=' + projectId;
+
+                $.get(url, function (data) {
+                    $.each(data, function (index, member) {
+                        assigneeSelect.append($('<option>', {
+                            value: member.value,
+                            text: member.text
+                        }));
+                    });
+                }).fail(function (error) {
+                    console.error("Error by getting the Project Members:", error);
+                    alert("Was not possible to load project members");
+                });
+            }
+        });
+
+
+
+
 
         // --- 2. LOAD AND SHOW EDIT MODAL ---
         function openEditModal(id) {

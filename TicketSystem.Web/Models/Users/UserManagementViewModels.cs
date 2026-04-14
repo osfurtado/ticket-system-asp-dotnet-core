@@ -52,13 +52,6 @@ namespace TicketSystem.Web.Models.Users
         [Display(Name = "Status Active")] public bool IsActive { get; set; }
     }
 
-    // Para a área pública
-    public class RegisterViewModel
-    {
-        [Required] public string Name { get; set; }
-        [Required] public string Username { get; set; }
-        [Required, DataType(DataType.Password)] public string Password { get; set; }
-    }
 
     // Para o usuário gerir o próprio perfil
     public class ProfileViewModel

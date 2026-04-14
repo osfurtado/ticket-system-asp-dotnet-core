@@ -1,42 +1,59 @@
-﻿@using TicketSystem.Web.Models.Users
+﻿@using TicketSystem.Web.Models.Account
 @model RegisterViewModel
 
 @{
-    ViewData["Title"] = "Criar nova conta";
+    Layout = null;
 }
 
-<h2>@ViewData["Title"]</h2>
-<p class="text-muted">Crie sua conta para solicitar acesso ao sistema.</p>
-<hr />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - TicketSystem</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+    </style> 
+</head>
+<body>
+    <div class="login-card">
+        <i class="bi bi-kanban text-primary" style="font-size: 4rem;"></i>
+        <h3 class="mb-4 mt-2">Ticket System</h3>
 
-<div class="row">
-    <div class="col-md-4">
-        <form asp-controller="Account" asp-action="Register" method="post">
+        <form asp-controller="Account" asp-action="Register" method="post" class="text-start">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="mb-3">
-                <label asp-for="Name" class="form-label">Nome Completo</label>
-                <input asp-for="Name" class="form-control" />
+                <label asp-for="Name" class="form-label text-muted">Full name</label>
+                <input asp-for="Name" class="form-control form-control-sm" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
-                <label asp-for="Username" class="form-label">Username</label>
-                <input asp-for="Username" class="form-control" />
+                <label asp-for="Username" class="form-label text-muted">Username</label>
+                <input asp-for="Username" class="form-control form-control-sm" />
                 <span asp-validation-for="Username" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
-                <label asp-for="Password" class="form-label">Senha</label>
-                <input asp-for="Password" type="password" class="form-control" />
+                <label asp-for="Password" class="form-label text-muted">Password</label>
+                <input asp-for="Password" type="password" class="form-control form-control-sm" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
 
-            <button type="submit" class="btn btn-success mt-2">Registrar-se</button>
-            <a asp-action="Login" class="btn btn-link mt-2">Já tenho uma conta</a>
+            <button type="submit" class="btn btn-success btn-sm mt-2 w-100">Register</button>
+            <div class="d-flex justify-content-between flex-sm-wrap">
+                <a asp-action="Login" class="btn btn-link mt-2">I have an account</a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-link mt-2">Back</a>
+            </div>
         </form>
     </div>
-</div>
+</body>
+</html>
+
 
 @section Scripts {
     @{

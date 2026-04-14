@@ -21,7 +21,9 @@ namespace TicketSystem.Web.Models.Ticket.ViewModels
         public required string CurrentStatus { get; set; }
         public IEnumerable<SelectListItem>? StatusList { get; set; }
         public int WorkflowId { get; set; }
-
-
+        public int ProjectId { get; set; }
+        public bool CanEdit { get; set; }
+        public bool CanChangeStatus { get; set; }
+        public bool CanManageDependencies { get; set; }
     }
 }

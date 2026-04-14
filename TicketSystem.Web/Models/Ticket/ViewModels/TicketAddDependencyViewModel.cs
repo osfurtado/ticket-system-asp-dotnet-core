@@ -12,5 +12,7 @@ namespace TicketSystem.Web.Models.Ticket.ViewModels
         public IEnumerable<SelectListItem> AvailableTickets { get; set; } = new List<SelectListItem>();
         public List<TicketModel> TicketsBlockingMe { get; set; } = new(); 
         public List<TicketModel> TicketsIBlock { get; set; } = new();
+
+        public bool CanManageDependencies { get; set; }
     }
 }

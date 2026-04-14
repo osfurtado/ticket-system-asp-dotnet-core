@@ -22,9 +22,15 @@
         </div>
         <div class="mb-3">
             <label asp-for="ProjectId" class="form-label"></label>
-            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select" disabled="@(Model.ProjectId > 0 ? "disabled" : null)">
                 <option value="">-- Select Project --</option>
             </select>
+
+            @if (Model.ProjectId > 0)
+            {
+                <input type="hidden" asp-for="ProjectId" />
+            }
+
             <span asp-validation-for="ProjectId" class="text-danger"></span>
         </div>
         <div class="mb-3">
@@ -39,3 +45,4 @@
         <button type="submit" class="btn btn-primary">Save Ticket</button>
     </div>
 </form>
+

@@ -20,5 +20,7 @@ namespace TicketSystem.Web.Models.Ticket.ViewModels
 
         public bool CanChange { get; set; }
 
+        public bool CanChangeStatus { get; set; }
+
     }
 }

@@ -40,6 +40,8 @@ namespace TicketSystem.Web.Models.ProjectManagement
         public string MemberUserId { get; set; } = string.Empty;
         public string MemberName { get; set; } = string.Empty;
         public string RoleInProject { get; set; } = string.Empty;
+
+        public bool CanRemoveMember { get; set; }
         public string Initials { get; set; } = string.Empty;
 
         public List<MemberTicketsViewModel> TicketsAssigned = new();

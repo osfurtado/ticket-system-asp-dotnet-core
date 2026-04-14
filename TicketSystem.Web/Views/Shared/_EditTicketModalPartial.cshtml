@@ -22,10 +22,15 @@
         </div>
         <div class="mb-3">
             <label asp-for="CurrentStatus" class="form-label"></label>
-            <select asp-for="CurrentStatus" asp-items="Model.StatusList" class="form-select">
+            <select asp-for="CurrentStatus" asp-items="Model.StatusList" class="form-select" disabled="@(!Model.CanChangeStatus ? "disabled" : null)">
                 <option value="">-- Select Status --</option>
             </select>
             <span asp-validation-for="CurrentStatus" class="text-danger"></span>
+            @if (!Model.CanChangeStatus)
+            {
+                <small class="text-danger">This ticket is blocked or not assigned.</small>
+                <input type="hidden" asp-for="CurrentStatus" />
+            }
         </div>
         <div class="mb-3">
             <label asp-for="AssigneeId" class="form-label"></label>

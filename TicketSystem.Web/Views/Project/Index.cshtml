@@ -46,19 +46,7 @@
                         </div>
                         <div class="card-footer bg-transparent border-top-0 d-flex justify-content-between align-items-center">
                             <small class="text-muted">Start: @item.StartDate.ToShortDateString()</small>
-    
-                            <div class="d-flex gap-2">
-                                @if (User.IsInRole("Admin") && item.EndDate.HasValue)
-                                {
-                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post"
-                                          onsubmit="return confirm('Tem a certeza que deseja apagar este projeto? Esta ação removerá o projeto da lista.');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Apagar Projeto">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                }
-                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success">Details</a>
-                            </div>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success">Details</a>
                         </div>
                     </div>
                 </div>

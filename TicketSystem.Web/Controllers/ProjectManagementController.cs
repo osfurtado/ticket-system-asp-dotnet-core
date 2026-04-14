@@ -89,6 +89,7 @@ namespace TicketSystem.Web.Controllers
                     MemberUserId = m.Member?.Id ?? string.Empty,
                     MemberName = m.Member?.Name ?? "Unknown",
                     RoleInProject = m.RoleInProject,
+                    CanRemoveMember = CanRemoveMember(currentUserId, project, m.MemberId),
                     IsOnline = ChatHub.IsUserOnline(m.Member?.Id ?? string.Empty),
                     Initials = AvatarHelper.GetInitials(m.Member?.Name ?? "Default")
                 }).ToList(),
@@ -237,39 +238,24 @@ namespace TicketSystem.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Project/Delete/5
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var projectModel = await _context.Projects
-                .Include(p => p.Workflow)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (projectModel == null)
-            {
-                return NotFound();
-            }
-
-            return View(projectModel);
-        }
-
+        // TODO: MOVE TO PROJECT MANAGEMENT
         // POST: Project/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var projectModel = await _context.Projects.FindAsync(id);
-            
-            if (projectModel != null)
+            var project = await _context.Projects.FindAsync(id);
+
+            if (project == null) return NotFound();
+
+            if (!project.EndDate.HasValue)
             {
-                projectModel.IsDeleted = true;
+                return RedirectToAction(nameof(Index));
             }
 
+            // Soft Delete
+            project.IsDeleted = true;
+            _context.Projects.Update(project);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
@@ -389,7 +375,7 @@ namespace TicketSystem.Web.Controllers
                 return RedirectToAction(nameof(Details), "ProjectManagement", new { id = projectId }, "members");
             }
 
-            var project = await _context.Projects.Include(p => p.Members).FirstOrDefaultAsync(p => p.Id == projectId);
+            var project = await _context.Projects.Include(p => p.Members).Include(p => p.Tickets).FirstOrDefaultAsync(p => p.Id == projectId);
 
             if (project == null) return NotFound();
 
@@ -587,7 +573,7 @@ namespace TicketSystem.Web.Controllers
         }
 
 
-        // ----- PRIVATE METHODS --------------
+        // ----- CHECKING METHODS --------------
 
         private bool CanChangeProject(string currentUserId, ProjectModel project)
         {
@@ -610,19 +596,32 @@ namespace TicketSystem.Web.Controllers
                        project.Members.Any(m => m.MemberId == currentUserId && (m.RoleInProject == "Manager" || m.RoleInProject == "Moderator")));
         }
 
+        private bool CanRemoveMember(string currentUserId, ProjectModel project, string memberId)
+        {
+            if(CanChangeMember(currentUserId, project, memberId) && !project.Tickets.Any(t => t.AssigneeId == memberId && t.CurrentStatus != "Closed"))
+            {
+                return true;
+            }
+            return false;
+        }
+
         private async Task<PMCreateEditViewModel> BuildViewModelAsync(
                                                         CreateProjectVM? createForm = null,
                                                         EditProjectVM? editForm = null,
                                                         bool showCreateModal = false,
                                                         bool showEditModal = false)
         {
-            var projects = await _context.Projects.Select(p => new ProjectListVM
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var projects = await _context.Projects.Where(p => !p.IsDeleted).Include(p => p.Members).Select(p => new ProjectListVM
             {
                 Id = p.Id,
                 Title = p.Title,
                 StartDate = p.StartDate,
                 EndDate =  p.EndDate,
-                CreatedBy = p.CreatedBy!.Name ?? "Unknown"
+                CreatedBy = p.CreatedBy!.Name,
+                TotalMembers = p.Members.Count(),
+                CanDelete = p.EndDate.HasValue
             }).ToListAsync();
 
             return new PMCreateEditViewModel

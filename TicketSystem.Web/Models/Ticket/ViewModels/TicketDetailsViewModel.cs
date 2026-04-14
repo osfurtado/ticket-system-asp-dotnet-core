@@ -13,11 +13,13 @@ namespace TicketSystem.Web.Models.Ticket.ViewModels
         public string CreatorName { get; set; } = string.Empty;
         public string? AssigneeName { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool CanEdit { get; set; }
+        public bool CanChangeStatus { get; set; }
+        public bool CanManageDependencies { get; set; }
 
         public List<CommentViewModel> Comments { get; set; } = new();
         public List<AttachmentViewModel> Attachments { get; set; } = new();
 
-        // Propriedades para os formulários na mesma página
         public AddCommentViewModel NewComment { get; set; } = new();
         public UploadAttachmentViewModel NewAttachment { get; set; } = new();
     }

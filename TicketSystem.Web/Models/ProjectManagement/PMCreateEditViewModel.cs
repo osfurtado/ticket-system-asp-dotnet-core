@@ -21,6 +21,9 @@ namespace TicketSystem.Web.Models.ProjectManagement
         public DateOnly StartDate { get; set; }
         [Display(Name = "End")]
         public DateOnly? EndDate { get; set; }
+        [Display(Name = "Members")]
+        public int TotalMembers { get; set; }
+        public bool CanDelete { get; set; }
     }
 
     public class CreateProjectVM

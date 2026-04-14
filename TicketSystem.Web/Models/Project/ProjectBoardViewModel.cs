@@ -9,6 +9,7 @@ namespace TicketSystem.Web.Models.Project
         public string WorkflowName { get; set; } = string.Empty;
 
         public bool CanCreateTicket { get; set; }
+        public bool CanManage { get; set; }
 
         public DateOnly? EndDate { get; set; }
 

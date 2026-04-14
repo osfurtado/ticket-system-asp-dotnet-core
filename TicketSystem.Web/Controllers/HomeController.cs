@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using TicketSystem.Web.Models;
+using TicketSystem.Web.Models.Home;
 
 namespace TicketSystem.Web.Controllers;
 
@@ -17,9 +18,39 @@ public class HomeController : Controller
         _context = context;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        return View();
+        if (User.Identity!.IsAuthenticated) return RedirectToAction("Index", "Ticket");
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var model = new LandingPageViewModel
+        {
+            // Tickets Stats
+            TotalTickets = await _context.Tickets.CountAsync(),
+            ClosedTickets = await _context.Tickets.CountAsync(t => t.CurrentStatus == "Closed"),
+
+            // Project Stats
+            TotalProjects = await _context.Projects.CountAsync(p => !p.IsDeleted),
+            ActiveProjects = await _context.Projects.CountAsync(p => !p.IsDeleted && (p.EndDate == null || p.EndDate > today)),
+
+            // User Stats
+            TotalUsers = await _context.Users.CountAsync()
+        };
+
+        model.OpenTickets = model.TotalTickets - model.ClosedTickets;
+        model.ClosedProjects = model.TotalProjects - model.ActiveProjects;
+
+        // TODO: For While Mockdata
+
+        model.UsersByRole = new Dictionary<string, int>
+        {
+            { "Admin", 2 },
+            { "Manager", 5 },
+            { "Member", model.TotalUsers - 7 > 0 ? model.TotalUsers - 7 : 0 }
+        };
+
+        return View(model);
     }
 
     [Authorize]
