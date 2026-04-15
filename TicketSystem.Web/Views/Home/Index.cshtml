@@ -119,8 +119,8 @@
                         @foreach (var role in Model.UsersByRole)
                         {
                             <div>
-                                <span class="d-block fw-bold text-dark">@role.Value</span>
-                                <span>@role.Key</span>
+                                <span class="d-block fw-bold text-dark">@role.UserCount</span>
+                                <span>@role.RoleName</span>
                             </div>
                         }
                     </div>

@@ -23,13 +23,6 @@
                     <a class="btn btn-primary btn-sm" asp-controller="ProjectManagement" asp-action="Details" asp-route-id="@Model.ProjectId"><i class="bi bi-gear"></i> Manage</a>
                 }
                 
-                   @* TODO: MOVE TO PROJECT MANAGEMENT *@
-              @*<form asp-controller="Project" asp-action="Close" asp-route-id="@Model.ProjectId" method="post"
-                      onsubmit="return confirm('Would you like to finish this Project? It will not be possible to add new tickets.');">
-                    <button type="submit" class="btn btn-outline-danger">
-                        Finish Project
-                    </button>
-                </form> *@
 
                 @if (Model.CanCreateTicket)
                 {
@@ -42,7 +35,7 @@
     </div>
    
     <!-- KANBAN BOARD -->
-    <div class="row flex-nowrap overflow-auto pb-4" style="min-height: 60vh;">
+    <div class="row flex-nowrap overflow-auto pb-4" style="min-height: 60vh; max-height: 70vh; ">
         @foreach (var status in Model.WorkflowStatuses)
         {
             <div class="col-12 col-md-4 col-lg-3 kanban-column"
@@ -58,11 +51,11 @@
                         </span>
                     </h6>
 
-                    <div class="d-flex flex-column gap-2 flex-grow-1 dropzone">
+                    <div class="d-flex flex-column gap-2 flex-grow-1 dropzone overflow-y-auto overflow-x-hidden pe-2" style="min-height: 0;">
                         @foreach (var ticket in Model.Tickets.Where(t => t.CurrentStatus == status))
                         {
                             bool canDrag = !ticket.IsLocked;
-                            <div class="card shadow-sm border-start border-1 @(ticket.IsBlocked ? "border-danger" : "border-primary") kanban-card @(canDrag ? "" : "opacity-75")"
+                            <div class="card shadow-sm border-start border-1 @(ticket.IsBlocked ? "border-danger" : "border-secondary") kanban-card @(canDrag ? "" : "opacity-75")"
                                  draggable="@(canDrag ? "true" : "false")"
                                  ondragstart="@(canDrag ? "drag(event)" : "return false;")"
                                  id="ticket-@ticket.Id"

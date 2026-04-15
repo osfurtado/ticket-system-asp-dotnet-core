@@ -44,8 +44,28 @@ namespace TicketSystem.Web.Controllers
             // Apply Filters
             query = ApplyFilters(query, model);
 
+            // --- PAGINATION LOGIC ---
+
+            // 1. Get total count of filtered items
+            model.TotalItems = await query.CountAsync();
+
+            // 2. Calculate total pages
+            model.TotalPages = (int)Math.Ceiling(model.TotalItems / (double)model.PageSize);
+
+            // 3. Ensure CurrentPage is within bounds
+            if (model.CurrentPage < 1) model.CurrentPage = 1;
+            if (model.CurrentPage > model.TotalPages && model.TotalPages > 0) model.CurrentPage = model.TotalPages;
+
+            // 4. Calculate how many records to skip
+            var skipAmount = (model.CurrentPage - 1) * model.PageSize;
+
+            // --- END PAGINATION LOGIC ---
+
             // To ViewModel
             model.Tickets = await query
+                .OrderByDescending(t => t.CreatedAt) 
+                .Skip(skipAmount)
+                .Take(model.PageSize)
                 .Select(t => new TicketListViewModel
                 {
                     Id = t.Id,
@@ -67,10 +87,10 @@ namespace TicketSystem.Web.Controllers
                 })
                 .ToListAsync();
 
-            // Populate Dropdowns (Ideally cached or loaded more efficiently)
+            // Populate Dropdowns
             model.ProjectList = await _context.Projects.Select(p => p.Title).OrderBy(t => t).ToListAsync();
             model.CreatedByList = await _context.Users.Select(u => u.UserName ?? "No Username").OrderBy(t => t).ToListAsync();
-            model.AssigneeList = model.CreatedByList; 
+            model.AssigneeList = model.CreatedByList;
 
             return View(model);
         }
@@ -781,7 +801,7 @@ namespace TicketSystem.Web.Controllers
                 {
                     "Open" => query.Where(t => t.CurrentStatus == "Open"),
                     "Closed" => query.Where(t => t.CurrentStatus == "Closed"),
-                    _ => query.Where(t => t.CurrentStatus != "Open" && t.CurrentStatus != "Close")
+                    _ => query.Where(t => t.CurrentStatus != "Open" && t.CurrentStatus != "Closed")
                 };
             }
             if (!string.IsNullOrEmpty(model.SearchTitle))

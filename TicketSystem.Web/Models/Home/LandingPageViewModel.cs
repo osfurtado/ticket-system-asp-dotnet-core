@@ -14,7 +14,13 @@
 
         // Users
         public int TotalUsers { get; set; }
-        public Dictionary<string, int> UsersByRole { get; set; } = new Dictionary<string, int>();
+        public List<RoleUsageViewModel> UsersByRole { get; set; } = [];
+    }
+
+    public class RoleUsageViewModel
+    {
+        public string RoleName { get; set; } = string.Empty;
+        public int UserCount { get; set; }
     }
 }
 

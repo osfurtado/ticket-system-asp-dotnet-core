@@ -41,14 +41,12 @@ public class HomeController : Controller
         model.OpenTickets = model.TotalTickets - model.ClosedTickets;
         model.ClosedProjects = model.TotalProjects - model.ActiveProjects;
 
-        // TODO: For While Mockdata
-
-        model.UsersByRole = new Dictionary<string, int>
+        model.UsersByRole =  _context.Roles
+        .Select(role => new RoleUsageViewModel
         {
-            { "Admin", 2 },
-            { "Manager", 5 },
-            { "Member", model.TotalUsers - 7 > 0 ? model.TotalUsers - 7 : 0 }
-        };
+            RoleName = role.Name!,
+            UserCount = _context.UserRoles.Count(ur => ur.RoleId == role.Id)
+        }).ToList();
 
         return View(model);
     }

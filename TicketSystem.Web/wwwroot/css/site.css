@@ -41,103 +41,70 @@ body {
     color: var(--bs-body-color);
 }
 
-/* SIDEBAR */
-.sidebar {
-    width: 250px;
-    background-color: #212529; /* Dark Bootstrap color: #212529 */
-    color: white;
-    transition: width 0.3s ease;
+/* --------------------------------------- SIDEBAR -------------------------------------------------------- */
+
+#sidebar .nav-link {
+    transition: all 0.2s ease;
+    height: 48px; 
     display: flex;
-    flex-direction: column;
-    z-index: 1000;
-}
-
-    .sidebar.collapsed {
-        width: 80px;
-    }
-
-    .sidebar .brand-title {
-        font-size: 1.2rem;
-        font-weight: bold;
-        padding: 20px;
-        display: flex;
-        align-items: center;
-        border-bottom: 1px solid #343a40;
-    }
-
-    .sidebar .nav-link {
-        color: #adb5bd;
-        display: flex;
-        align-items: center;
-        padding: 12px 20px;
-        white-space: nowrap;
-        overflow: hidden;
-        transition: all 0.2s;
-    }
-
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            color: #fff;
-            background-color: #343a40;
-        }
-
-        .sidebar .nav-link i {
-            font-size: 1.4rem;
-            min-width: 40px; /* Mantém os ícones alinhados */
-        }
-
-    .sidebar .sidebar-text {
-        transition: opacity 0.3s;
-    }
-
-    .sidebar.collapsed .sidebar-text {
-        opacity: 0;
-        display: none;
-    }
-
-/* ÁREA DE CONTEÚDO (Header + Main) */
-.main-wrapper {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* TOP HEADER */
-.top-header {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
-    background-color: var(--bs-body-bg);
-    border-bottom: 1px solid var(--bs-border-color);
+    border-radius: 8px; 
+    margin-bottom: 4px; 
+    color: var(--bs-body-color);
 }
 
-.content-area {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
+
+    #sidebar .nav-link:hover {
+        background-color: var(--bs-tertiary-bg);
+        color: var(--bs-primary);
+    }
+
+
+    #sidebar .nav-link.active {
+        background-color: var(--bs-primary);
+        color: white !important;
+    }
+
+        #sidebar .nav-link.active i {
+            color: white !important;
+        }
+
+#sidebar.collapsed .nav-pills {
+    padding: 0;
 }
 
-/* AVATAR */
-.user-avatar {
+#sidebar.collapsed .nav-item {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+#sidebar.collapsed .nav-link {
+    width: 48px; 
+    padding: 0;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+    #sidebar.collapsed .nav-link i {
+        font-size: 1.3rem; 
+        margin: 0 !important;
+    }
+
+.header-btn {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
-    background-color: #0d6efd; /* Primary color */
-    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    cursor: pointer;
+    padding: 0;
 }
 
-    .user-avatar.dropdown-toggle::after {
-        display: none;
-    }
 
 
+
+
+/* ------------------------------- CHAT ---------------------------------------------- */
 .avatar-circle {
     width: 45px;
     height: 45px;
@@ -213,17 +180,17 @@ body {
 
 /* Receiver Styling */
 .message-wrapper.received .chat-bubble {
-    background-color: #f8f9fa; /* Bootstrap Light */
-    color: #212529; /* Bootstrap Dark text */
+    background-color: #f8f9fa; /* Bootstrap Light: #f8f9fa */
+    color: #212529; /* Bootstrap Dark text: #212529 */
     border-bottom-left-radius: 2px; /* Pointy edge */
-    border: 1px solid #dee2e6;
+    /*border: 1px solid #dee2e6;*/
 }
 
     .message-wrapper.received .chat-bubble a {
-        color: #0d6efd; /* Azul padrão do Bootstrap */
-        text-decoration: underline;
-        font-weight: 500;
-    }
+        color: #0d6efd; /* Azul padrão do Bootstrap:  #0d6efd */
+    text-decoration: underline;
+    font-weight: 500;
+}
 
 /* Timestamp */
 .chat-timestamp {
@@ -232,4 +199,31 @@ body {
     margin-top: 4px;
     display: block;
     text-align: right;
+}
+
+
+/*--------------------------- Kanban Details --------------------------- */
+
+/* Target the dropzone scrollbar specifically */
+.dropzone::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropzone::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dropzone::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+    .dropzone::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+
+/* Firefox compatibility */
+.dropzone {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
