@@ -2,10 +2,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Sockets;
 using System.Security.Claims;
 using TicketSystem.Web.Models;
+using TicketSystem.Web.Models.Communication;
 using TicketSystem.Web.Models.ProjectManagement;
 using TicketSystem.Web.Models.Ticket;
 using TicketSystem.Web.Models.Ticket.ViewModels;
@@ -17,11 +19,14 @@ namespace TicketSystem.Web.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public TicketController(AppDbContext context, IWebHostEnvironment environment)
+
+        public TicketController(AppDbContext context, IWebHostEnvironment environment, IHubContext<ChatHub> hubContext)
         {
             _context = context;
             _environment = environment;
+            _hubContext = hubContext;
         }
 
         // GET: Ticket
@@ -286,6 +291,12 @@ namespace TicketSystem.Web.Controllers
 
             _context.Add(ticket);
             await _context.SaveChangesAsync();
+
+            if (!string.IsNullOrEmpty(viewModel.AssigneeId))
+            {
+                await SendAutomatedAssignmentMessageAsync(viewModel.AssigneeId, ticket);
+            }
+
             return Json(new { success = true });
         }
 
@@ -411,6 +422,8 @@ namespace TicketSystem.Web.Controllers
                 return Json(new { success = false, message = "Ticket must be Assigned" });
             }
 
+            bool assigneeChanged = ticketFromDB.AssigneeId != viewModel.AssigneeId;
+
             ticketFromDB.Title = viewModel.Title;
             ticketFromDB.Description = viewModel.Description;
             ticketFromDB.AssigneeId = viewModel.AssigneeId;
@@ -423,6 +436,12 @@ namespace TicketSystem.Web.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+
+                if (assigneeChanged && !string.IsNullOrEmpty(viewModel.AssigneeId))
+                {
+                    await SendAutomatedAssignmentMessageAsync(viewModel.AssigneeId, ticketFromDB);
+                }
+
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -435,6 +454,9 @@ namespace TicketSystem.Web.Controllers
                     throw;
                 }
             }
+
+
+
             return Json(new { success = true });
         }
 
@@ -859,6 +881,44 @@ namespace TicketSystem.Web.Controllers
             }
             return false;
         }
+
+
+        private async Task SendAutomatedAssignmentMessageAsync(string assigneeId, TicketModel ticket)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (currentUserId == assigneeId || currentUserId == null) return;
+
+
+            var ticketUrl = Url.Action(
+                action: "Details", 
+                controller: "Ticket",
+                values: new { id = ticket.Id },
+                protocol: Request.Scheme);
+
+
+            var content = $"Hi! A new Ticket was assigned to you: '{ticket.Title}'. You can access it with this link: {ticketUrl}";
+
+            
+            var message = new Message
+            {
+                SenderId = currentUserId,
+                ReceiverId = assigneeId,
+                Content = content,
+                SentAt = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.User(assigneeId).SendAsync("ReceiveMessage", currentUserId, content);
+
+            var unreadCount = await _context.Messages.CountAsync(m => m.ReceiverId == assigneeId && !m.IsRead);
+            await _hubContext.Clients.User(assigneeId).SendAsync("ReceiveNotification", unreadCount);
+        }
+
+
 
     }
 }

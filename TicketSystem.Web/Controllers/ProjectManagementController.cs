@@ -53,6 +53,7 @@ namespace TicketSystem.Web.Controllers
                 .Include(p => p.Tickets)
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
 
+            
 
             if (project == null) return NotFound();
 
@@ -91,7 +92,14 @@ namespace TicketSystem.Web.Controllers
                     RoleInProject = m.RoleInProject,
                     CanRemoveMember = CanRemoveMember(currentUserId, project, m.MemberId),
                     IsOnline = ChatHub.IsUserOnline(m.Member?.Id ?? string.Empty),
-                    Initials = AvatarHelper.GetInitials(m.Member?.Name ?? "Default")
+                    Initials = AvatarHelper.GetInitials(m.Member?.Name ?? "Default"),
+                    TicketsAssigned = project.Tickets?
+                        .Where(t => t.AssigneeId == m.MemberId)
+                        .Select(t => new MemberTicketsViewModel
+                        {
+                            Id = t.Id,
+                            Title = t.Title
+                        }).ToList() ?? new List<MemberTicketsViewModel>()
                 }).ToList(),
                 CanChangeMember = CanChangeMember(currentUserId, project),
                 AddMemberForm = new AddProjectMemberViewModel

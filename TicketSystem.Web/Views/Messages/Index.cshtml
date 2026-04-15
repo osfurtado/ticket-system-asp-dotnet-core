@@ -1,7 +1,7 @@
 ﻿@{
 }
 
-<div class="container-fluid bg-light-subtle rounded shadow-sm chat-container d-flex p-0">
+<div class="container-fluid bg-body rounded shadow-sm chat-container d-flex p-0">
     
     <!-- Left Sidebar: Conversations -->
     <div class="col-4 conversation-list p-3">
@@ -165,7 +165,7 @@
             $.get('/Messages/GetConversations', function (data) {
                 let html = '';
                 data.forEach(conv => {
-                    let activeClass = conv.userId === currentChatUserId ? 'bg-secondary-subtle' : 'bg-light-subtle';
+                    let activeClass = conv.userId === currentChatUserId ? 'bg-light-subtle border-1' : 'bg-body';
             
                     // CHECK THE STATUS HERE:
                     let onlineStatusClass = conv.isOnline ? 'bg-success' : 'bg-secondary';

@@ -56,8 +56,8 @@
                 </div>
                 <div class="card text-center border-success border-2 shadow-sm bg-light-subtle" style="width: 18rem;">
                     <div class="card-body">
-                        <h2 class="display-4 fw-bold mb-0">@Model.TotalTickets</h2>
-                        <p class="text-uppercase small">Tickets Closed</p>
+                        <h2 class="display-4 fw-bold mb-0">@Model.TotalOpenedTickets</h2>
+                        <p class="text-uppercase small">Open Tickets</p>
                     </div>
                 </div>
 
@@ -125,7 +125,7 @@
                                     @member.MemberName
                                 </div>
                             </td>
-                            <td>2 Tickets</td>
+                            <td>@member.TicketsAssigned.Count() Tickets</td>
                             <td>@member.RoleInProject</td>
                             <td>
                                 <span id="status-users-@member.MemberUserId" class="badge @(member.IsOnline ? "bg-success" : "bg-secondary")">
@@ -158,14 +158,17 @@
                                                             </button>
                                                         </form>
                                                     </li>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li>
-                                                        <form asp-action="RemoveMember" method="post">
-                                                            <input type="hidden" name="projectId" value="@Model.ProjectId" />
-                                                            <input type="hidden" name="memberId" value="@member.MemberId" />
-                                                            <button type="submit" class="dropdown-item text-danger btn-sm text-sm">Remove Member</button>
-                                                        </form>
-                                                    </li>
+                                                    @if (member.CanRemoveMember)
+                                                    {
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <form asp-action="RemoveMember" method="post">
+                                                                <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                                                                <input type="hidden" name="memberId" value="@member.MemberId" />
+                                                                <button type="submit" class="dropdown-item text-danger btn-sm text-sm">Remove Member</button>
+                                                            </form>
+                                                        </li>
+                                                    }
                                                 </ul>
                                             </div>
                                         }
