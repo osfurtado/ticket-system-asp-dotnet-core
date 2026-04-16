@@ -25,6 +25,8 @@ namespace TicketSystem.Web.Controllers
         // GET: Project/Index
         public async Task<IActionResult> Index()
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             var projectsList = await _context.Projects
             .Where(p => !p.IsDeleted)
             .Select(p => new ProjectListViewModel
@@ -36,7 +38,8 @@ namespace TicketSystem.Web.Controllers
                 EndDate = p.EndDate,
                 WorkflowName = p.Workflow != null ? p.Workflow.Name : "Without Workflow",
                 TotalTickets = p.Tickets.Count(),
-                OpenTickets = p.Tickets.Count(t => t.CurrentStatus != "Closed")
+                OpenTickets = p.Tickets.Count(t => t.CurrentStatus != "Closed"),
+                IsCurrentUserMember = p.Members.Any(m => m.MemberId == userId)
             }).ToListAsync();
 
             return View(projectsList);

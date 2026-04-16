@@ -59,7 +59,7 @@ namespace TicketSystem.Web.Models.Users
         [Required] public string Name { get; set; }
         [Required] public string Username { get; set; }
         [DataType(DataType.Password)]
-        public string? NewPassword { get; set; } // Opcional, só preenche se quiser mudar
+        public string? NewPassword { get; set; } 
     }
 
 }

@@ -82,13 +82,11 @@ namespace TicketSystem.Web.Controllers
             if (ModelState.IsValid)
             {
                 // Note que IsActive é false por padrão no Model
-                var user = new AppUser { UserName = model.Username, Name = model.Name };
+                var user = new AppUser { UserName = model.Username, Name = model.Name, IsActive = false };
                 var result = await _userManager.CreateAsync(user, model.Password);
 
                 if (result.Succeeded)
                 {
-                    // NÃO fazemos o SignIn aqui. O usuário deve aguardar a aprovação do Admin.
-                    TempData["SuccessMessage"] = "Registro concluído com sucesso! Aguarde o administrador ativar sua conta.";
                     return RedirectToAction("Login", "Account");
                 }
 
@@ -126,7 +124,7 @@ namespace TicketSystem.Web.Controllers
             user.UserName = model.Username;
             await _userManager.UpdateAsync(user);
 
-            // Atualizar senha se preenchido
+
             if (!string.IsNullOrEmpty(model.NewPassword))
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);

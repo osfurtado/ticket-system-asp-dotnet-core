@@ -1,0 +1,221 @@
+﻿@using TicketSystem.Web.Models.Home
+@model DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard Overview";
+}
+
+<style>
+    .border-start-primary { border-left: 4px solid #0d6efd !important; }
+    .border-start-success { border-left: 4px solid #198754 !important; }
+    .border-start-warning { border-left: 4px solid #ffc107 !important; }
+    .border-start-danger { border-left: 4px solid #dc3545 !important; }
+    .icon-bg { background-color: rgba(0,0,0,0.03); padding: 12px; border-radius: 50%; }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-start align-items-center mb-4">
+        <div>
+            <h2 class="h3 mb-0 text-gray-800 fw-bold">Dashboard Overview</h2>
+            <p class="text-muted mb-0">Welcome back. Here is what is happening with your projects today.</p>
+        </div>
+@*         <div>
+            <a asp-controller="Ticket" asp-action="Create" class="btn btn-primary shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i> New Ticket
+            </a>
+        </div> *@
+    </div>
+
+    @if (Model.IsAppAdmin)
+    {
+        <div class="card border-0 shadow-sm mb-4 bg-light-subtle">
+            <div class="card-body py-3">
+                <div class="row align-items-center text-center text-md-start">
+                    <div class="col-md-3 border-end-md">
+                        <span class="text-muted small text-uppercase fw-bold"><i class="bi bi-shield-lock me-1"></i> Admin View</span>
+                    </div>
+                    <div class="col-md-3 border-end-md mt-2 mt-md-0">
+                        <span class="text-muted">Total Users:</span> <span class="fw-bold fs-5 ms-1">@Model.TotalAppUsers</span>
+                    </div>
+                    <div class="col-md-3 border-end-md mt-2 mt-md-0">
+                        <span class="text-muted">Active Projects:</span> <span class="fw-bold fs-5 ms-1">@Model.TotalActiveProjects</span>
+                    </div>
+                    <div class="col-md-3 mt-2 mt-md-0">
+                        <span class="text-muted">Global Open Tickets:</span> <span class="fw-bold fs-5 ms-1">@Model.TotalOpenTicketsGlobally</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row mb-4 g-3">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 border-start-primary py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1" style="font-size: 0.8rem;">
+                                Active Projects
+                            </div>
+                            <div class="h3 mb-0 fw-bold">@Model.MyProjectsCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-briefcase text-primary fs-2 icon-bg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 border-start-success py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1" style="font-size: 0.8rem;">
+                                Assigned Tickets
+                            </div>
+                            <div class="h3 mb-0 fw-bold ">@Model.MyAssignedTicketsCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-ticket-detailed text-success fs-2 icon-bg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 border-start-warning py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1" style="font-size: 0.8rem;">
+                                Blocked Tickets
+                            </div>
+                            <div class="h3 mb-0 fw-bold">@Model.MyBlockedTicketsCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-exclamation-triangle text-warning fs-2 icon-bg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 border-start-danger py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-danger text-uppercase mb-1" style="font-size: 0.8rem;">
+                                Unread Messages
+                            </div>
+                            <div class="h3 mb-0 fw-bold">@Model.UnreadMessagesCount</div>
+                            @if (Model.UnreadMessagesCount > 0)
+                            {
+                                <a asp-controller="Messages" asp-action="Index" class="stretched-link"></a>
+                                <div class="text-danger small mt-2">
+                                    <i class="bi bi-arrow-right-circle"></i> View messages
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted small mt-2">No new messages</div>
+                            }
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-chat-left-dots text-danger fs-2 icon-bg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-5">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light-subtle border-bottom-0 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-muted">My Active Tickets</h6>
+                    <a asp-controller="Ticket" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="text-muted small text-uppercase">
+                                <tr>
+                                    <th class="border-0">Title</th>
+                                    <th class="border-0">Project</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0 text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if(!Model.RecentAssignedTickets.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">No active tickets assigned to you right now.</td>
+                                    </tr>
+                                }
+                                @foreach(var ticket in Model.RecentAssignedTickets)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="Ticket" asp-action="Details" asp-route-id="@ticket.Id" class="text-decoration-none fw-semibold">
+                                                @ticket.Title
+                                            </a>
+                                            <div class="text-muted small">Created @ticket.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted"><i class="bi bi-folder2 me-1"></i>@ticket.Project?.Title</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge rounded-pill bg-warning">@ticket.CurrentStatus</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <a asp-controller="Ticket" asp-action="Details" asp-route-id="@ticket.Id" class="btn btn-sm btn-light rounded-circle">
+                                                <i class="bi bi-arrow-right"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light-subtle border-bottom-0 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-muted">Recent Projects</h6>
+                    <a asp-controller="Project" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All</a>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        @if(!Model.MyRecentProjects.Any())
+                        {
+                            <li class="list-group-item border-0 text-center text-muted py-4">You are not part of any active projects.</li>
+                        }
+                        @foreach(var project in Model.MyRecentProjects)
+                        {
+                            <li class="list-group-item px-0 border-bottom d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <a asp-controller="Project" asp-action="Details" asp-route-id="@project.Id" class="text-decoration-none fw-semibold d-block mb-1">
+                                        @project.Title
+                                    </a>
+                                    <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>Started: @project.StartDate.ToString("MMM dd, yyyy")</span>
+                                </div>
+                                <a asp-controller="Project" asp-action="Details" asp-route-id="@project.Id" class="btn btn-sm btn-light rounded-circle">
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

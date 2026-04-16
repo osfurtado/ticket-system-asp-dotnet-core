@@ -1,0 +1,14 @@
+﻿@model int
+
+<a asp-controller="Messages" asp-action="Index"
+       class="btn btn-outline-secondary border-0 rounded-circle position-relative header-btn shadow-none">
+    <i class="bi bi-bell fs-5"></i>
+    @if (Model > 0)
+    {
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+              style="font-size: 0.65rem; padding: 0.35em 0.5em;">
+            @Model
+            <span class="visually-hidden">unread messages</span>
+        </span>
+    }
+</a>
